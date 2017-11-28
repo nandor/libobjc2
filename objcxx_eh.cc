@@ -4,7 +4,7 @@
 #include "objcxx_eh.h"
 #include <exception>
 
-extern "C" 
+extern "C"
 {
 #include "objc/runtime.h"
 };
@@ -129,7 +129,7 @@ bool gnustep::libobjc::__objc_class_type_info::__do_catch(const type_info *throw
 	bool found = false;
 	// Id throw matches any ObjC catch.  This may be a silly idea!
 	if (dynamic_cast<const __objc_id_type_info*>(thrownType)
-	    || (AppleCompatibleMode && 
+	    || (AppleCompatibleMode &&
 	        dynamic_cast<const __objc_class_type_info*>(thrownType)))
 	{
 		thrown = **(id**)obj;
@@ -219,7 +219,7 @@ void* objc_object_for_cxx_exception(void *thrown_exception, int *isValid)
 	__cxa_exception *ex = (__cxa_exception*) ((char*)thrown_exception -
 			offsetof(struct __cxa_exception, unwindHeader));
 	const std::type_info *thrownType = ex->exceptionType;
-	if (!dynamic_cast<const gnustep::libobjc::__objc_id_type_info*>(thrownType) && 
+	if (!dynamic_cast<const gnustep::libobjc::__objc_id_type_info*>(thrownType) &&
 	    !dynamic_cast<const gnustep::libobjc::__objc_class_type_info*>(thrownType))
 	{
 		*isValid = 0;

@@ -6,6 +6,6 @@
 
 @interface Object
 {
-	Class isa;
+  Class isa;
 }
 @end

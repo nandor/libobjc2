@@ -10,21 +10,21 @@
  */
 struct objc_ivar
 {
-	/**
-	 * Name of this instance variable.
-	 */
-	const char *name;
-	/**
-	 * Type encoding for this instance variable.
-	 */
-	const char *type;
-	/**
-	 * The offset from the start of the object.  When using the non-fragile
-	 * ABI, this is initialized by the compiler to the offset from the start of
-	 * the ivars declared by this class.  It is then set by the runtime to the
-	 * offset from the object pointer.  
-	 */
-	int         offset;
+  /**
+   * Name of this instance variable.
+   */
+  const char *name;
+  /**
+   * Type encoding for this instance variable.
+   */
+  const char *type;
+  /**
+   * The offset from the start of the object.  When using the non-fragile
+   * ABI, this is initialized by the compiler to the offset from the start of
+   * the ivars declared by this class.  It is then set by the runtime to the
+   * offset from the object pointer.
+   */
+  int         offset;
 };
 
 /**
@@ -33,15 +33,15 @@ struct objc_ivar
  * instance variables, because that would require existing objects to be
  * reallocated, which is only possible with accurate GC (i.e. not in C).
  */
-struct objc_ivar_list 
+struct objc_ivar_list
 {
-	/**
-	 * The number of instance variables in this list.
-	 */
-	int              count;
-	/**
-	 * An array of instance variable metadata structures.  Note that this array
-	 * has count elements.
-	 */
-	struct objc_ivar ivar_list[];
+  /**
+   * The number of instance variables in this list.
+   */
+  int              count;
+  /**
+   * An array of instance variable metadata structures.  Note that this array
+   * has count elements.
+   */
+  struct objc_ivar ivar_list[];
 };

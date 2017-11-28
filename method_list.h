@@ -1,23 +1,23 @@
 /**
- * Metadata structure describing a method.  
+ * Metadata structure describing a method.
  */
 struct objc_method
 {
-	/**
-	 * Selector used to send messages to this method.  The type encoding of
-	 * this method should match the types field.
-	 */
-	SEL         selector;
-	/**
-	 * The type encoding for this selector.  Used only for introspection, and
-	 * only required because of the stupid selector handling in the old GNU
-	 * runtime.  In future, this field may be reused for something else.
-	 */
-	const char *types;
-	/**
-	 * A pointer to the function implementing this method.
-	 */
-	IMP         imp;
+  /**
+   * Selector used to send messages to this method.  The type encoding of
+   * this method should match the types field.
+   */
+  SEL         selector;
+  /**
+   * The type encoding for this selector.  Used only for introspection, and
+   * only required because of the stupid selector handling in the old GNU
+   * runtime.  In future, this field may be reused for something else.
+   */
+  const char *types;
+  /**
+   * A pointer to the function implementing this method.
+   */
+  IMP         imp;
 };
 
 /**
@@ -28,16 +28,16 @@ struct objc_method
  */
 struct objc_method_list
 {
-	/**
-	 * The next group of methods in the list.
-	 */
-	struct objc_method_list  *next;
-	/**
-	 * The number of methods in this list.
-	 */
-	int                       count;
-	/**
-	 * An array of methods.  Note that the actual size of this is count.
-	 */
-	struct objc_method        methods[];
+  /**
+   * The next group of methods in the list.
+   */
+  struct objc_method_list  *next;
+  /**
+   * The number of methods in this list.
+   */
+  int                       count;
+  /**
+   * An array of methods.  Note that the actual size of this is count.
+   */
+  struct objc_method        methods[];
 };

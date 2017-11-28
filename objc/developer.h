@@ -4,10 +4,10 @@
 
 enum objc_developer_mode_np
 {
-	/** User mode - the default. */
-	objc_developer_mode_user,
-	/** Developer mode - allows replacing classes. */
-	objc_developer_mode_developer
+  /** User mode - the default. */
+  objc_developer_mode_user,
+  /** Developer mode - allows replacing classes. */
+  objc_developer_mode_developer
 };
 /*
  * Sets the developer mode.  When in user mode (the default),

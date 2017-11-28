@@ -16,7 +16,7 @@ static struct objc_class _NSConcreteMallocBlockMeta;
 static struct objc_class _NSBlock;
 static struct objc_class _NSBlockMeta;
 
-static void createNSBlockSubclass(Class superclass, Class newClass, 
+static void createNSBlockSubclass(Class superclass, Class newClass,
 		Class metaClass, char *name)
 {
 	// Initialize the metaclass

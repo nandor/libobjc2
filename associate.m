@@ -184,7 +184,7 @@ static void deallocHiddenClass(id obj, SEL _cmd);
 static inline Class findHiddenClass(id obj)
 {
 	Class cls = obj->isa;
-	while (Nil != cls && 
+	while (Nil != cls &&
 	       !objc_test_class_flag(cls, objc_class_flag_assoc_class))
 	{
 		cls = class_getSuperclass(cls);
@@ -206,7 +206,7 @@ static Class allocateHiddenClass(Class superclass)
 	// class is which
 	// static int count;
 	//asprintf(&newClass->name, "%s%d", superclass->name, count++);
-	newClass->info = objc_class_flag_resolved | 
+	newClass->info = objc_class_flag_resolved |
 		objc_class_flag_class | objc_class_flag_user_created |
 		objc_class_flag_new_abi | objc_class_flag_hidden_class |
 		objc_class_flag_assoc_class;
@@ -223,7 +223,7 @@ static Class allocateHiddenClass(Class superclass)
 
 static inline Class initHiddenClassForObject(id obj)
 {
-	Class hiddenClass = allocateHiddenClass(obj->isa); 
+	Class hiddenClass = allocateHiddenClass(obj->isa);
 	assert(!class_isMetaClass(obj->isa));
 	static SEL cxx_destruct;
 	if (NULL == cxx_destruct)
@@ -341,7 +341,7 @@ id objc_getAssociatedObject(id object, void *key)
 	Class cls = object->isa;
 	while (Nil != cls)
 	{
-		while (Nil != cls && 
+		while (Nil != cls &&
 			   !objc_test_class_flag(cls, objc_class_flag_assoc_class))
 		{
 			cls = class_getSuperclass(cls);

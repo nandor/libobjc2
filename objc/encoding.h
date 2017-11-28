@@ -44,11 +44,11 @@ unsigned objc_get_type_qualifiers (const char *type);
 
 struct objc_struct_layout
 {
-	const char *original_type;
-	const char *type;
-	const char *prev_type;
-	unsigned int record_size;
-	unsigned int record_align;
+  const char *original_type;
+  const char *type;
+  const char *prev_type;
+  unsigned int record_size;
+  unsigned int record_align;
 };
 
 // Note: The implementations of these functions is horrible.

@@ -2,7 +2,7 @@
  * Sparse Array
  *
  * Author: David Chisnall
- * 
+ *
  * License: See COPYING.MIT
  *
  */
@@ -34,32 +34,32 @@ static const uint32_t data_mask = data_size - 1;
  * own locking).  For this reason, you should be very careful when deleting a
  * sparse array that there are no references to it held by other threads.
  */
-typedef struct 
+typedef struct
 {
-	/**
-	 * Number of bits that the masked value should be right shifted by to get
-	 * the index in the subarray.  If this value is greater than zero, then the
-	 * value in the array is another SparseArray*.
-	 */
-	uint32_t shift;
-	/**
-	 * The reference count for this.  Used for copy-on-write.  When making a
-	 * copy of a sparse array, we only copy the root node, and increment the
-	 * reference count of the remaining nodes.  When modifying any leaf node,
-	 * we copy if its reference count is greater than one.
-	 */
-	uint32_t refCount;
-	/**
-	 * The data stored in this sparse array node.
-	 */
-	void *data[data_size];
+  /**
+   * Number of bits that the masked value should be right shifted by to get
+   * the index in the subarray.  If this value is greater than zero, then the
+   * value in the array is another SparseArray*.
+   */
+  uint32_t shift;
+  /**
+   * The reference count for this.  Used for copy-on-write.  When making a
+   * copy of a sparse array, we only copy the root node, and increment the
+   * reference count of the remaining nodes.  When modifying any leaf node,
+   * we copy if its reference count is greater than one.
+   */
+  uint32_t refCount;
+  /**
+   * The data stored in this sparse array node.
+   */
+  void *data[data_size];
 } SparseArray;
 
 /**
  * Turn an index in the array into an index in the current depth.
  */
 #define MASK_INDEX(index) \
-	((index >> sarray->shift) & 0xff)
+  ((index >> sarray->shift) & 0xff)
 
 #define SARRAY_EMPTY ((void*)0)
 /**
@@ -69,40 +69,40 @@ typedef struct
  */
 static inline void* SparseArrayLookup(SparseArray * sarray, uint32_t index)
 {
-	// This unrolled version of the commented-out segment below only works with
-	// sarrays that use one-byte leafs.  It's really ugly, but seems to be faster.
-	// With this version, we get the same performance as the old GNU code, but
-	// with about half the memory usage.
-	uint32_t i = index;
-	switch (sarray->shift)
-	{
-		default: UNREACHABLE("broken sarray");
-		case 0:
-			return sarray->data[i & 0xff];
-		case 8:
-			return 
-				((SparseArray*)sarray->data[(i & 0xff00)>>8])->data[(i & 0xff)];
-		case 16:
-			return 
-				((SparseArray*)((SparseArray*)
-					sarray->data[(i & 0xff0000)>>16])->
-						data[(i & 0xff00)>>8])->data[(i & 0xff)];
-		case 24:
-			return 
-				((SparseArray*)((SparseArray*)((SparseArray*)
-					sarray->data[(i & 0xff000000)>>24])->
-						data[(i & 0xff0000)>>16])->
-							data[(i & 0xff00)>>8])->data[(i & 0xff)];
-	}
-	/*
-	while(sarray->shift > 0)
-	{
-		uint32_t i = MASK_INDEX(index);
-		sarray = (SparseArray*) sarray->data[i];
-	}
-	uint32_t i = index & sarray->mask;
-	return sarray->data[i];
-	*/
+  // This unrolled version of the commented-out segment below only works with
+  // sarrays that use one-byte leafs.  It's really ugly, but seems to be faster.
+  // With this version, we get the same performance as the old GNU code, but
+  // with about half the memory usage.
+  uint32_t i = index;
+  switch (sarray->shift)
+  {
+    default: UNREACHABLE("broken sarray");
+    case 0:
+      return sarray->data[i & 0xff];
+    case 8:
+      return
+        ((SparseArray*)sarray->data[(i & 0xff00)>>8])->data[(i & 0xff)];
+    case 16:
+      return
+        ((SparseArray*)((SparseArray*)
+          sarray->data[(i & 0xff0000)>>16])->
+            data[(i & 0xff00)>>8])->data[(i & 0xff)];
+    case 24:
+      return
+        ((SparseArray*)((SparseArray*)((SparseArray*)
+          sarray->data[(i & 0xff000000)>>24])->
+            data[(i & 0xff0000)>>16])->
+              data[(i & 0xff00)>>8])->data[(i & 0xff)];
+  }
+  /*
+  while(sarray->shift > 0)
+  {
+    uint32_t i = MASK_INDEX(index);
+    sarray = (SparseArray*) sarray->data[i];
+  }
+  uint32_t i = index & sarray->mask;
+  return sarray->data[i];
+  */
 }
 /**
  * Create a new sparse array.
@@ -143,7 +143,7 @@ void * SparseArrayNext(SparseArray * sarray, uint32_t * index);
 SparseArray *SparseArrayCopy(SparseArray * sarray);
 
 /**
- * Returns the total memory usage of a sparse array.  
+ * Returns the total memory usage of a sparse array.
  */
 int SparseArraySize(SparseArray *sarray);
 

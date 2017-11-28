@@ -28,23 +28,23 @@ __attribute__((objc_root_class))
 + (Class)class { return self; }
 + (id)new
 {
-	return class_createInstance(self, 0);
+  return class_createInstance(self, 0);
 }
 - (void)dealloc
 {
-	object_dispose(self);
+  object_dispose(self);
 }
 - (id)autorelease
 {
-	return objc_autorelease(self);
+  return objc_autorelease(self);
 }
 - (id)retain
 {
-	return objc_retain(self);
+  return objc_retain(self);
 }
 - (void)release
 {
-	objc_release(self);
+  objc_release(self);
 }
 - (void)_ARCCompliantRetainRelease {}
 @end
@@ -56,6 +56,6 @@ __attribute__((objc_root_class))
 - (void)_ARCCompatibleAutoreleasePool {}
 + (void)addObject:(id)anObject
 {
-	objc_autorelease(anObject);
+  objc_autorelease(anObject);
 }
 @end

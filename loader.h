@@ -50,7 +50,7 @@ void objc_try_load_category(struct objc_category *cat);
  */
 void objc_load_buffered_categories(void);
 /**
- * Updates the dispatch table for a class.  
+ * Updates the dispatch table for a class.
  */
 void objc_update_dtable_for_class(Class cls);
 /**

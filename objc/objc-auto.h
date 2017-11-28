@@ -13,33 +13,33 @@
  */
 enum
 {
-	/**
-	 * Perform an incremental collection if the collection ratio has not been
-	 * exceeded, or a full collection if it has.
-	 */
-	OBJC_RATIO_COLLECTION        = 0,
-	/**
-	 * Performs an incremental collection. 
-	 */
-	OBJC_GENERATIONAL_COLLECTION = 1,
-	/**
-	 * Performs a full collection.
-	 */
-	OBJC_FULL_COLLECTION         = 2,
-	/**
-	 * Repeatedly performs a full collection until collection does not find any
-	 * new free memory.
-	 */
-	OBJC_EXHAUSTIVE_COLLECTION   = 3,
-	/**
-	 * Only runs the collector (in any mode) if the number of bytes allocated
-	 * since the last collection is greater than the threshold.
-	 */
-	OBJC_COLLECT_IF_NEEDED       = (1 << 3),
-	/**
-	 * Does not return until the collector has finished running.  
-	 */
-	OBJC_WAIT_UNTIL_DONE         = (1 << 4),
+  /**
+   * Perform an incremental collection if the collection ratio has not been
+   * exceeded, or a full collection if it has.
+   */
+  OBJC_RATIO_COLLECTION        = 0,
+  /**
+   * Performs an incremental collection. 
+   */
+  OBJC_GENERATIONAL_COLLECTION = 1,
+  /**
+   * Performs a full collection.
+   */
+  OBJC_FULL_COLLECTION         = 2,
+  /**
+   * Repeatedly performs a full collection until collection does not find any
+   * new free memory.
+   */
+  OBJC_EXHAUSTIVE_COLLECTION   = 3,
+  /**
+   * Only runs the collector (in any mode) if the number of bytes allocated
+   * since the last collection is greater than the threshold.
+   */
+  OBJC_COLLECT_IF_NEEDED       = (1 << 3),
+  /**
+   * Does not return until the collector has finished running.  
+   */
+  OBJC_WAIT_UNTIL_DONE         = (1 << 4),
 };
 
 /**
@@ -47,8 +47,8 @@ enum
  */
 enum
 {
-	/** Ignored - provided for OS X compatibility. */
-	OBJC_CLEAR_RESIDENT_STACK = 1
+  /** Ignored - provided for OS X compatibility. */
+  OBJC_CLEAR_RESIDENT_STACK = 1
 };
 
 

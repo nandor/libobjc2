@@ -1,5 +1,5 @@
 /**
- * Stub declaration of NSObject.  Lots of things in the runtime require the 
+ * Stub declaration of NSObject.  Lots of things in the runtime require the
  */
 @interface NSObject
 -retain;

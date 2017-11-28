@@ -2,8 +2,8 @@
 #include <windows.h>
 static unsigned sleep(unsigned seconds)
 {
-	Sleep(seconds*1000);
-	return 0;
+  Sleep(seconds*1000);
+  return 0;
 }
 #else
 #include <unistd.h>
@@ -28,13 +28,13 @@ extern int spinlocks[spinlock_count];
  */
 static inline volatile int *lock_for_pointer(const void *ptr)
 {
-	intptr_t hash = (intptr_t)ptr;
-	// Most properties will be pointers, so disregard the lowest few bits
-	hash >>= sizeof(void*) == 4 ? 2 : 8;
-	intptr_t low = hash & spinlock_mask;
-	hash >>= 16;
-	hash |= low;
-	return spinlocks + (hash & spinlock_mask);
+  intptr_t hash = (intptr_t)ptr;
+  // Most properties will be pointers, so disregard the lowest few bits
+  hash >>= sizeof(void*) == 4 ? 2 : 8;
+  intptr_t low = hash & spinlock_mask;
+  hash >>= 16;
+  hash |= low;
+  return spinlocks + (hash & spinlock_mask);
 }
 
 /**
@@ -46,8 +46,8 @@ static inline volatile int *lock_for_pointer(const void *ptr)
  */
 inline static void unlock_spinlock(volatile int *spinlock)
 {
-	__sync_synchronize();
-	*spinlock = 0;
+  __sync_synchronize();
+  *spinlock = 0;
 }
 /**
  * Attempts to lock a spinlock.  This is heavily optimised for the uncontended
@@ -65,17 +65,17 @@ inline static void unlock_spinlock(volatile int *spinlock)
  */
 inline static void lock_spinlock(volatile int *spinlock)
 {
-	int count = 0;
-	// Set the spin lock value to 1 if it is 0.
-	while(!__sync_bool_compare_and_swap(spinlock, 0, 1))
-	{
-		count++;
-		if (0 == count % 10)
-		{
-			// If it is already 1, let another thread play with the CPU for a
-			// bit then try again.
-			sleep(0);
-		}
-	}
+  int count = 0;
+  // Set the spin lock value to 1 if it is 0.
+  while(!__sync_bool_compare_and_swap(spinlock, 0, 1))
+  {
+    count++;
+    if (0 == count % 10)
+    {
+      // If it is already 1, let another thread play with the CPU for a
+      // bit then try again.
+      sleep(0);
+    }
+  }
 }
 

@@ -13,8 +13,8 @@
  */
 struct sel_type_list
 {
-	const char *value;
-	struct sel_type_list *next;
+  const char *value;
+  struct sel_type_list *next;
 };
 
 /**
@@ -22,23 +22,23 @@ struct sel_type_list
  */
 struct objc_selector
 {
-	union
-	{
-		/**
-		 * The name of this selector.  Used for unregistered selectors.
-		 */
-		const char *name;
-		/**
-		 * The index of this selector in the selector table.  When a selector
-		 * is registered with the runtime, its name is replaced by an index
-		 * uniquely identifying this selector.  The index is used for dispatch.
-		 */
-		uintptr_t index;
-	};
-	/**
-	 * The Objective-C type encoding of the message identified by this selector.
-	 */
-	const char * types;
+  union
+  {
+    /**
+     * The name of this selector.  Used for unregistered selectors.
+     */
+    const char *name;
+    /**
+     * The index of this selector in the selector table.  When a selector
+     * is registered with the runtime, its name is replaced by an index
+     * uniquely identifying this selector.  The index is used for dispatch.
+     */
+    uintptr_t index;
+  };
+  /**
+   * The Objective-C type encoding of the message identified by this selector.
+   */
+  const char * types;
 };
 
 /**
@@ -47,18 +47,18 @@ struct objc_selector
 __attribute__((unused))
 static uint32_t get_untyped_idx(SEL aSel)
 {
-	SEL untyped = sel_registerTypedName_np(sel_getName(aSel), 0);
-	return untyped->index;
+  SEL untyped = sel_registerTypedName_np(sel_getName(aSel), 0);
+  return untyped->index;
 }
 
 __attribute__((unused))
 static SEL sel_getUntyped(SEL aSel)
 {
-	return sel_registerTypedName_np(sel_getName(aSel), 0);
+  return sel_registerTypedName_np(sel_getName(aSel), 0);
 }
 
 /**
- * Returns whether a selector is mapped.  
+ * Returns whether a selector is mapped.
  */
 BOOL isSelRegistered(SEL sel);
 

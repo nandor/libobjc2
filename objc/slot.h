@@ -27,22 +27,22 @@
  */
 struct objc_slot
 {
-	/** The class to which this slot is attached (used internally).  */
-	Class owner;
-	/** The class for which this slot was cached.  Note that this can be
-	 * modified by different cache owners, in different threads.  Doing so may
-	 * cause some cache misses, but if different methods are sending messages
-	 * to the same object and sharing a cached slot then it may also improve
-	 * cache hits.  Profiling is probably required here. */
-	Class cachedFor;
-	/** The (typed) selector for the method identified by this slot. */
-	const char *types;
-	/** The current version.  This changes if the method changes or if a
-	 * subclass overrides this method, potentially invalidating this cache. */
-	int version;
-	/** The method pointer for this method. */
-	IMP method;
-	/** Selector for this method. */
-	SEL selector;
+  /** The class to which this slot is attached (used internally).  */
+  Class owner;
+  /** The class for which this slot was cached.  Note that this can be
+   * modified by different cache owners, in different threads.  Doing so may
+   * cause some cache misses, but if different methods are sending messages
+   * to the same object and sharing a cached slot then it may also improve
+   * cache hits.  Profiling is probably required here. */
+  Class cachedFor;
+  /** The (typed) selector for the method identified by this slot. */
+  const char *types;
+  /** The current version.  This changes if the method changes or if a
+   * subclass overrides this method, potentially invalidating this cache. */
+  int version;
+  /** The method pointer for this method. */
+  IMP method;
+  /** Selector for this method. */
+  SEL selector;
 } OBJC_NONPORTABLE;
 #endif // __OBJC_SLOT_H_INCLUDED__

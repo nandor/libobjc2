@@ -18,17 +18,17 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions")
 # Build configuration
 add_definitions( -DGNUSTEP -D__OBJC_RUNTIME_INTERNAL__=1)
 
-set(libobjc_ASM_SRCS 
+set(libobjc_ASM_SRCS
 	block_trampolines.S
 	objc_msgSend.S)
-set(libobjc_OBJC_SRCS 
+set(libobjc_OBJC_SRCS
 	NSBlocks.m
 	Protocol2.m
 	arc.m
 	associate.m
 	blocks_runtime.m
 	properties.m)
-set(libobjc_C_SRCS 
+set(libobjc_C_SRCS
 	abi_version.c
 	alias_table.c
 	block_to_imp.c
@@ -130,10 +130,10 @@ else ()
 	add_definitions(-DNO_LEGACY)
 endif ()
 
-set(LIBOBJC_NAME "objc" CACHE STRING 
+set(LIBOBJC_NAME "objc" CACHE STRING
 	"Name of the Objective-C runtime library (e.g. objc2 for libobjc2)")
 
-set(INCLUDE_DIRECTORY "objc" CACHE STRING 
+set(INCLUDE_DIRECTORY "objc" CACHE STRING
 	"Subdirectory of the include path to install the headers.")
 
 
@@ -181,7 +181,7 @@ if (ENABLE_OBJCXX)
 	# a separate libobjcxx.
 	if (CXX_RUNTIME)
 		message(STATUS "Using ${CXX_RUNTIME} as the C++ runtime library")
-		try_compile( USERUNTIME 
+		try_compile( USERUNTIME
 			"${CMAKE_BINARY_DIR}/CMake"
 			"${CMAKE_SOURCE_DIR}/CMake"
 			test_cxx_runtime

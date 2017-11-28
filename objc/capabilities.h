@@ -19,7 +19,7 @@
 #include "Availability.h"
 
 #ifndef __GNUSTEP_CAPABILITIES_H__
-#	define __GNUSTEP_CAPABILITIES_H__
+# define __GNUSTEP_CAPABILITIES_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,7 +83,7 @@ extern "C" {
  * runtime to resolve the alias, e.g. if objc_getClass() is called with an
  * alias as the argument.
  */
-#define OBJC_CAP_REGISTERED_COMPATIBILITY_ALIASES	10
+#define OBJC_CAP_REGISTERED_COMPATIBILITY_ALIASES 10
 /**
  * The runtime supports automatic reference counting, including support for
  * __weak references.
@@ -123,14 +123,14 @@ extern "C" {
  * the required capability, aborting if it does not.
  */
 #define OBJC_REQUIRE_CAPABILITY(x) \
-	__attribute__((constructor)) static void objc_test ## x(void)\
-	{\
-		if (!objc_test_capability(x))\
-		{\
-			fprintf(stderr, "Runtime does not support required feature: " #x "\n");\
-			exit(1);\
-		}\
-	}
+  __attribute__((constructor)) static void objc_test ## x(void)\
+  {\
+    if (!objc_test_capability(x))\
+    {\
+      fprintf(stderr, "Runtime does not support required feature: " #x "\n");\
+      exit(1);\
+    }\
+  }
 
 /**
  * Run time feature test.  This function returns 1 if the runtime supports the

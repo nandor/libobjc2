@@ -40,7 +40,7 @@ beyond the scope of this quick guide.
 If you have gcc and clang both installed, then cmake currently defaults to
 selecting gcc.  You should override this by adding `-DCMAKE_C_COMPILER=clang
 -DCMAKE_CXX_COMPILER=clang` to your Objective-C flags.
-You will probably also need to add 
+You will probably also need to add
 '-DCMAKE_ASM_COMPILER=clang -DCMAKE_ASM_FLAGS=-c -DTESTS=OFF'
 
 
@@ -74,7 +74,7 @@ this Objective-C runtime) and libsupc++ from the GNU project.  If these are
 available, then you will get a single libobjc.so, which links to either
 libcxxrt or libsupc++.  This linkage is required so that we can interoperate
 with C++ exceptions, in particular catching Objective-C objects thrown from
-Objective-C libraries in Objective-C++ `catch` blocks. 
+Objective-C libraries in Objective-C++ `catch` blocks.
 
 On most GNU/Linux systems, libstdc++ is statically linked to libsupc++.  In
 this configuration, we provide a separate libobjcxx.so, which avoids the need

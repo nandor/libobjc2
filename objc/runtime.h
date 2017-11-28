@@ -10,24 +10,24 @@ extern "C" {
 #endif
 
 #ifndef __GNUSTEP_RUNTIME__
-#	define __GNUSTEP_RUNTIME__
+# define __GNUSTEP_RUNTIME__
 #endif
 
 #ifndef __has_feature
-#	define __has_feature(x) 0
+# define __has_feature(x) 0
 #endif
 
 #ifndef __unsafe_unretained
-#	ifndef __has_feature
-#		define __unsafe_unretained
-#	elif !__has_feature(objc_arc)
-#		define __unsafe_unretained
-#	endif
+# ifndef __has_feature
+#   define __unsafe_unretained
+# elif !__has_feature(objc_arc)
+#   define __unsafe_unretained
+# endif
 #endif
 
 // Make sure we get the limit macros, even in C++ mode
 #ifndef __STDC_LIMIT_MACROS                                                     
-#	define __STDC_LIMIT_MACROS 1
+# define __STDC_LIMIT_MACROS 1
 #endif
 
 #include <stdint.h>
@@ -38,16 +38,16 @@ extern "C" {
 
 // Undo GNUstep substitutions
 #ifdef class_setVersion
-#	undef class_setVersion
+# undef class_setVersion
 #endif
 #ifdef class_getClassMethod
-#	undef class_getClassMethod
+# undef class_getClassMethod
 #endif
 #ifdef objc_getClass
-#	undef objc_getClass
+# undef objc_getClass
 #endif
 #ifdef objc_lookUpClass
-#	undef objc_lookUpClass
+# undef objc_lookUpClass
 #endif
 
 /**
@@ -58,8 +58,8 @@ typedef struct objc_ivar* Ivar;
 // Don't redefine these types if the old GCC header was included first.
 #ifndef __objc_INCLUDE_GNU
 // Define the macro so that including the old GCC header does nothing.
-#	define __objc_INCLUDE_GNU
-#	define __objc_api_INCLUDE_GNU
+# define __objc_INCLUDE_GNU
+# define __objc_api_INCLUDE_GNU
 
 
 /**
@@ -81,14 +81,14 @@ typedef struct objc_class *Class;
  */
 typedef struct objc_object
 {
-	/**
-	 * Pointer to this object's class.  Accessing this directly is STRONGLY
-	 * discouraged.  You are recommended to use object_getClass() instead.
-	 */
+  /**
+   * Pointer to this object's class.  Accessing this directly is STRONGLY
+   * discouraged.  You are recommended to use object_getClass() instead.
+   */
 #ifndef __OBJC_RUNTIME_INTERNAL__
-	__attribute__((deprecated))
+  __attribute__((deprecated))
 #endif
-	Class isa;
+  Class isa;
 } *id;
 
 /**
@@ -96,14 +96,14 @@ typedef struct objc_object
  */
 struct objc_super
 {
-	/** The receiver of the message. */
-	__unsafe_unretained id receiver;
-	/** The class containing the method to call. */
-#	if !defined(__cplusplus)  &&  !__OBJC2__
-	Class class;
-#	else
-	Class super_class;
-#	endif
+  /** The receiver of the message. */
+  __unsafe_unretained id receiver;
+  /** The class containing the method to call. */
+# if !defined(__cplusplus)  &&  !__OBJC2__
+  Class class;
+# else
+  Class super_class;
+# endif
 };
 
 /**
@@ -121,19 +121,19 @@ typedef struct objc_method *Method;
 /**
  * Objective-C boolean type.
  */
-#	ifdef STRICT_APPLE_COMPATIBILITY
+# ifdef STRICT_APPLE_COMPATIBILITY
 typedef signed char BOOL;
-#	else
-#		ifdef __vxwords
+# else
+#   ifdef __vxwords
 typedef  int BOOL;
-#		else
+#   else
 typedef unsigned char BOOL;
-#		endif
-#	endif
+#   endif
+# endif
 
 #else
 // Method in the GCC runtime is a struct, Method_t is the pointer
-#	define Method Method_t
+# define Method Method_t
 #endif // __objc_INCLUDE_GNU
 
 
@@ -157,14 +157,14 @@ typedef struct objc_protocol Protocol;
  */
 struct objc_method_description
 {
-	/**
-	 * The name of this method.
-	 */
-	SEL   name;
-	/**
-	 * The types of this method.
-	 */
-	const char *types;
+  /**
+   * The name of this method.
+   */
+  SEL   name;
+  /**
+   * The types of this method.
+   */
+  const char *types;
 };
 
 /**
@@ -177,38 +177,38 @@ struct objc_method_description
  */
 typedef struct
 {
-	/**
-	 * The flag that this attribute describes.  All current flags are single characters,
-	 */
-	const char *name;
-	/**
-	 */
-	const char *value;
+  /**
+   * The flag that this attribute describes.  All current flags are single characters,
+   */
+  const char *name;
+  /**
+   */
+  const char *value;
 } objc_property_attribute_t;
 
 
 
 #ifndef YES
-#	define YES ((BOOL)1)
+# define YES ((BOOL)1)
 #endif
 #ifndef NO
-#	define NO ((BOOL)0)
+# define NO ((BOOL)0)
 #endif
 
 #ifdef __GNUC
-#	define _OBJC_NULL_PTR __null
+# define _OBJC_NULL_PTR __null
 #elif defined(__cplusplus)
-#	define _OBJC_NULL_PTR 0
+# define _OBJC_NULL_PTR 0
 #else
-#	define _OBJC_NULL_PTR ((void*)0)
+# define _OBJC_NULL_PTR ((void*)0)
 #endif
 
 #ifndef nil
-#	define nil ((id)_OBJC_NULL_PTR)
+# define nil ((id)_OBJC_NULL_PTR)
 #endif
 
 #ifndef Nil
-#	define Nil ((Class)_OBJC_NULL_PTR)
+# define Nil ((Class)_OBJC_NULL_PTR)
 #endif
 
 #include "slot.h"
@@ -708,7 +708,7 @@ BOOL protocol_conformsToProtocol(Protocol *p, Protocol *other);
  * responsible for freeing this array.
  */
 struct objc_method_description *protocol_copyMethodDescriptionList(Protocol *p,
-	BOOL isRequiredMethod, BOOL isInstanceMethod, unsigned int *count);
+  BOOL isRequiredMethod, BOOL isInstanceMethod, unsigned int *count);
 
 /**
  * Returns an array of property metadata values, with the number being stored
@@ -738,7 +738,7 @@ Protocol *__unsafe_unretained*objc_copyProtocolList(unsigned int *outCount);
  * protocol.
  */
 struct objc_method_description protocol_getMethodDescription(Protocol *p,
-	SEL aSel, BOOL isRequiredMethod, BOOL isInstanceMethod);
+  SEL aSel, BOOL isRequiredMethod, BOOL isInstanceMethod);
 
 /**
  * Returns the name of the specified protocol.
@@ -753,7 +753,7 @@ const char* protocol_getName(Protocol *p);
  * on classes, we return NULL if this is not YES.
  */
 objc_property_t protocol_getProperty(Protocol *p, const char *name,
-	BOOL isRequiredProperty, BOOL isInstanceProperty);
+  BOOL isRequiredProperty, BOOL isInstanceProperty);
 
 /**
  * Compares two protocols.  Currently, protocols are assumed to be equal if
@@ -838,7 +838,7 @@ unsigned sel_copyTypedSelectors_np(const char *selName, SEL *const sels, unsigne
  * forwarding and the sender may affect how lookup occurs.
  */
 extern struct objc_slot *objc_msg_lookup_sender(id *receiver, SEL selector, id sender)
-	OBJC_NONPORTABLE;
+  OBJC_NONPORTABLE;
 
 /**
  * Registers a class for small objects.  Small objects are stored inside a
@@ -854,21 +854,21 @@ BOOL objc_registerSmallObjectClass_np(Class cls, uintptr_t classId);
  * This restriction may be relaxed in the future on 64-bit systems.
  */
 #ifndef UINTPTR_MAX
-#	define OBJC_SMALL_OBJECT_MASK ((sizeof(void*) == 4) ? 1 : 7)
+# define OBJC_SMALL_OBJECT_MASK ((sizeof(void*) == 4) ? 1 : 7)
 #elif UINTPTR_MAX < UINT64_MAX
-#	define OBJC_SMALL_OBJECT_MASK 1
+# define OBJC_SMALL_OBJECT_MASK 1
 #else
-#	define OBJC_SMALL_OBJECT_MASK 7
+# define OBJC_SMALL_OBJECT_MASK 7
 #endif
 /**
  * The number of bits reserved for the class identifier in a small object.
  */
 #ifndef UINTPTR_MAX
-#	define OBJC_SMALL_OBJECT_SHIFT ((sizeof(void*) == 4) ? 1 : 3)
+# define OBJC_SMALL_OBJECT_SHIFT ((sizeof(void*) == 4) ? 1 : 3)
 #elif UINTPTR_MAX < UINT64_MAX
-#	define OBJC_SMALL_OBJECT_SHIFT 1
+# define OBJC_SMALL_OBJECT_SHIFT 1
 #else
-#	define OBJC_SMALL_OBJECT_SHIFT 3
+# define OBJC_SMALL_OBJECT_SHIFT 3
 #endif
 
 
@@ -878,26 +878,26 @@ BOOL objc_registerSmallObjectClass_np(Class cls, uintptr_t classId);
  */
 enum
 {
-	/**
-	 * Perform straight assignment, no message sends.
-	 */
-	OBJC_ASSOCIATION_ASSIGN = 0,
-	/**
-	 * Retain the associated object.
-	 */
-	OBJC_ASSOCIATION_RETAIN_NONATOMIC = 1,
-	/**
-	 * Copy the associated object, by sending it a -copy message.
-	 */
-	OBJC_ASSOCIATION_COPY_NONATOMIC = 3,
-	/**
-	 * Atomic retain.
-	 */
-	OBJC_ASSOCIATION_RETAIN = 0x301,
-	/**
-	 * Atomic copy.
-	 */
-	OBJC_ASSOCIATION_COPY = 0x303
+  /**
+   * Perform straight assignment, no message sends.
+   */
+  OBJC_ASSOCIATION_ASSIGN = 0,
+  /**
+   * Retain the associated object.
+   */
+  OBJC_ASSOCIATION_RETAIN_NONATOMIC = 1,
+  /**
+   * Copy the associated object, by sending it a -copy message.
+   */
+  OBJC_ASSOCIATION_COPY_NONATOMIC = 3,
+  /**
+   * Atomic retain.
+   */
+  OBJC_ASSOCIATION_RETAIN = 0x301,
+  /**
+   * Atomic copy.
+   */
+  OBJC_ASSOCIATION_COPY = 0x303
 };
 /**
  * Association policy, used when setting associated objects.  

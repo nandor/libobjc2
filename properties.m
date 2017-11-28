@@ -21,7 +21,7 @@ static inline BOOL checkAttribute(char field, int attr)
 }
 
 /**
- * Public function for getting a property.  
+ * Public function for getting a property.
  */
 id objc_getProperty(id obj, SEL _cmd, ptrdiff_t offset, BOOL isAtomic)
 {
@@ -650,7 +650,7 @@ PRIVATE struct objc_property propertyFromAttrs(const objc_property_attribute_t *
 
 BOOL class_addProperty(Class cls,
                        const char *name,
-                       const objc_property_attribute_t *attributes, 
+                       const objc_property_attribute_t *attributes,
                        unsigned int attributeCount)
 {
 	if ((Nil == cls) || (NULL == name) || (class_getProperty(cls, name) != 0)) { return NO; }

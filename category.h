@@ -10,26 +10,26 @@
  * likely to be added with ABI version 10.  Until then, the methods created by
  * a declared property will work, but introspection on the property will not.
  */
-struct objc_category 
+struct objc_category
 {
-	/** 
-	 * The name of this category.
-	 */
-	const char                *name;
-	/**
-	 * The name of the class to which this category should be applied.
-	 */
-	const char                *class_name;
-	/**
-	 * The list of instance methods to add to the class.
-	 */
-	struct objc_method_list   *instance_methods;
-	/**
-	 * The list of class methods to add to the class.
-	 */
-	struct objc_method_list   *class_methods;
-	/**
-	 * The list of protocols adopted by this category.
-	 */
-	struct objc_protocol_list *protocols;
+  /**
+   * The name of this category.
+   */
+  const char                *name;
+  /**
+   * The name of the class to which this category should be applied.
+   */
+  const char                *class_name;
+  /**
+   * The list of instance methods to add to the class.
+   */
+  struct objc_method_list   *instance_methods;
+  /**
+   * The list of class methods to add to the class.
+   */
+  struct objc_method_list   *class_methods;
+  /**
+   * The list of protocols adopted by this category.
+   */
+  struct objc_protocol_list *protocols;
 };

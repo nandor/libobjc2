@@ -46,7 +46,7 @@ struct arc_autorelease_pool
 	 */
 	id *insert;
 	/**
-	 * The remainder of the page, an array of object pointers.  
+	 * The remainder of the page, an array of object pointers.
 	 */
 	id pool[POOL_SIZE];
 };
@@ -77,7 +77,7 @@ static inline void release(id obj);
 
 /**
  * Empties objects from the autorelease pool, stating at the head of the list
- * specified by pool and continuing until it reaches the stop point.  If the stop point is NULL then 
+ * specified by pool and continuing until it reaches the stop point.  If the stop point is NULL then
  */
 static void emptyPool(struct arc_tls *tls, id *stop)
 {
@@ -380,7 +380,7 @@ id objc_autorelease(id obj)
 
 id objc_autoreleaseReturnValue(id obj)
 {
-	if (!useARCAutoreleasePool) 
+	if (!useARCAutoreleasePool)
 	{
 		struct arc_tls* tls = getARCThreadData();
 		if (NULL != tls)

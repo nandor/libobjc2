@@ -37,7 +37,7 @@ aside from the GCC runtime were MIT licensed, although the GPL'd code present
 in the GCC runtime meant that the combined work had to remain under the GPL.
 
 Since then, all of the GCC code has been removed, leaving the remaining files
-all MIT licensed, and allowing the entire work to be MIT licensed.  
+all MIT licensed, and allowing the entire work to be MIT licensed.
 
 The exception handling code uses a header file implementing the generic parts
 of the Itanium EH ABI.  This file comes from PathScale's libcxxrt.  PathScale
@@ -73,7 +73,7 @@ symbols:
 
 The latter should point to the former or to the `ivar_offset` field in the ivar
 metadata.  The former should be pointed to by the only element in the
-`ivar_offsets` array in the class structure.  
+`ivar_offsets` array in the class structure.
 
 In other compilation units referring to this ivar, the latter symbol should be
 exported as a weak symbol pointing to an internal symbol containing the
@@ -88,7 +88,7 @@ example if it is declared in the same compilation unit, by finding the symbol
 during a link-time optimization phase, or as a result of a command-line
 argument, then it may use the `__objc_ivar_offset_value_NewClass.anIvar` symbol
 as the ivar offset.  This eliminates the need for one load for every ivar
-access.  
+access.
 
 Protocols
 ---------
@@ -96,7 +96,7 @@ Protocols
 The runtime now provides a `__ObjC_Protocol_Holder_Ugly_Hack` class.  All
 protocols that are referenced but not defined should be registered as
 categories on this class.  This ensures that every protocol is registered with
-the runtime.  
+the runtime.
 
 In the near future, the runtime will ensure that protocols can be looked up by
 name at run time and that empty protocol definitions have their fields updated
@@ -160,7 +160,7 @@ required for this kind of activity.
 The GNUstep runtime adds a flag to class objects indicating that their
 instances are present in the global plane.  All constant strings, protocols,
 and classes are in the global plane, and may therefore be sent and may receive
-messages bypassing the normal plane interception mechanism.  
+messages bypassing the normal plane interception mechanism.
 
 The runtime library does not provide direct support for planes, it merely
 provides the core components required to implement support for planes in
@@ -185,14 +185,14 @@ functions for locking the runtime mutex are still supported, but their use any
 mutex not exported by the runtime library is explicitly not supported.  The
 (private) lock.h header is used to abstract the details of different threading
 systems sufficiently for the runtime.  This provides mechanisms for locking,
-unlocking, creating, and destroying mutex objects.  
+unlocking, creating, and destroying mutex objects.
 
 Type-Dependent Dispatch
 -----------------------
 
 Traditionally, Objective-C method lookup is done entirely on the name of the
 method.  This is problematic when the sender and receiver of the method
-disagree on the types of a method.  
+disagree on the types of a method.
 
 For example, consider a trivial case where you have two methods with the same
 name, one taking an integer, the other taking a floating point value.  Both
@@ -329,7 +329,7 @@ If there is a single personality function, there must be a single format for
 language-specific data.  The current C++ format is more expressive than the
 Objective-C format, so we used it directly, with one extension.  C++ landing
 pads are identified by a `std::type_info` subclass in the type info tables for
-exception unwinding.  We provide two subclasses of this: 
+exception unwinding.  We provide two subclasses of this:
 
 	gnustep::libobjc::__objc_id_type_info;
 	gnustep::libobjc::__objc_class_type_info;
