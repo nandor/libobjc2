@@ -12,7 +12,7 @@ struct objc_method_description_list
    * field points to the name, not to the index of the uniqued version of the
    * name.  You must not use them for dispatch.
    */
-  struct objc_selector methods[];
+  struct objc_unreg_selector methods[];
 };
 
 

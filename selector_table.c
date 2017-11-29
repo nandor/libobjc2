@@ -77,7 +77,7 @@ static inline struct sel_type_list *selLookup(uint32_t idx)
 
 PRIVATE inline BOOL isSelRegistered(SEL sel)
 {
-  if ((uintptr_t)sel->name < (uintptr_t)selector_count)
+  if (sel->index_ < (uintptr_t)selector_count)
   {
     return YES;
   }
@@ -86,11 +86,16 @@ PRIVATE inline BOOL isSelRegistered(SEL sel)
 
 static const char *sel_getNameNonUnique(SEL sel)
 {
-  const char *name = sel->name;
+  const char *name;
   if (isSelRegistered(sel))
   {
     struct sel_type_list * list = selLookup_locked(sel_index(sel));
     name = (list == NULL) ? NULL : list->value;
+  }
+  else
+  {
+    struct objc_unreg_selector *usel = (struct objc_unreg_selector *)sel;
+    name = usel->name;
   }
   if (NULL == name)
   {
@@ -292,7 +297,7 @@ static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
   DEBUG_LOG("Sel %s uid: %d, idx: %d, hash: %d\n", sel_getNameNonUnique(aSel), uid, idx, hash_selector(aSel));
   struct sel_type_list *typeList =
     (struct sel_type_list *)selector_pool_alloc();
-  typeList->value = aSel->name;
+  typeList->value = aSel->name_;
   typeList->next = 0;
   // Store the name.
   if (idx >= table_size)
@@ -311,18 +316,18 @@ static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
   // Store the selector.
   selector_insert(sel_table, aSel);
   // Set the selector's name to the uid.
-  aSel->name = (const char*)(uintptr_t)uid;
+  aSel->index_ = (uintptr_t)uid;
 }
 /**
  * Really registers a selector.  Must be called with the selector table locked.
  */
-static inline void register_selector_locked(SEL aSel)
+static inline void register_selector_locked(struct objc_unreg_selector *aSel)
 {
   uintptr_t idx = selector_count++;
   if (NULL == aSel->types)
   {
     DEBUG_LOG("Registering selector %d %s\n", (int)idx, sel_getNameNonUnique(aSel));
-    add_selector_to_table(aSel, idx, idx);
+    add_selector_to_table((SEL)aSel, idx, idx);
     objc_resize_dtables(selector_count);
     return;
   }
@@ -331,7 +336,7 @@ static inline void register_selector_locked(SEL aSel)
   if (untyped == NULL)
   {
     untyped = selector_pool_alloc();
-    untyped->name = aSel->name;
+    untyped->name_ = aSel->name;
     untyped->types = 0;
     DEBUG_LOG("Registering selector %d %s\n", (int)idx, sel_getNameNonUnique(aSel));
     add_selector_to_table(untyped, idx, idx);
@@ -347,7 +352,7 @@ static inline void register_selector_locked(SEL aSel)
   uintptr_t uid = sel_index(untyped);
   TDD(uid = idx);
   DEBUG_LOG("Registering typed selector %d %s %s\n", (int)uid, sel_getNameNonUnique(aSel), sel_getType_np(aSel));
-  add_selector_to_table(aSel, uid, idx);
+  add_selector_to_table((SEL)aSel, uid, idx);
 
   // Add this set of types to the list.
   // This is quite horrible.  Most selectors will only have one type
@@ -360,6 +365,7 @@ static inline void register_selector_locked(SEL aSel)
   typeListHead->next = typeList;
   objc_resize_dtables(selector_count);
 }
+
 /**
  * Registers a selector.  This assumes that the argument is never deallocated.
  */
@@ -370,14 +376,14 @@ PRIVATE SEL objc_register_selector(SEL aSel)
     return aSel;
   }
   // Check that this isn't already registered, before we try
-  SEL registered = selector_lookup(aSel->name, aSel->types);
+  SEL registered = selector_lookup(aSel->name_, aSel->types);
   if (NULL != registered && selector_equal(aSel, registered))
   {
-    aSel->name = registered->name;
+    aSel->index_ = registered->index_;
     return registered;
   }
   LOCK(&selector_table_lock);
-  register_selector_locked(aSel);
+  register_selector_locked((struct objc_unreg_selector *)aSel);
   UNLOCK(&selector_table_lock);
   return aSel;
 }
@@ -388,7 +394,7 @@ PRIVATE SEL objc_register_selector(SEL aSel)
 static SEL objc_register_selector_copy(SEL aSel, BOOL copyArgs)
 {
   // If an identical selector is already registered, return it.
-  SEL copy = selector_lookup(aSel->name, aSel->types);
+  SEL copy = selector_lookup(aSel->name_, aSel->types);
   DEBUG_LOG("Checking if old selector is registered: %d (%d)\n", NULL != copy ? selector_equal(aSel, copy) : 0, ((NULL != copy) && selector_equal(aSel, copy)));
   if ((NULL != copy) && selector_identical(aSel, copy))
   {
@@ -396,36 +402,41 @@ static SEL objc_register_selector_copy(SEL aSel, BOOL copyArgs)
     return copy;
   }
   LOCK_FOR_SCOPE(&selector_table_lock);
-  copy = selector_lookup(aSel->name, aSel->types);
+  copy = selector_lookup(aSel->name_, aSel->types);
   if (NULL != copy && selector_identical(aSel, copy))
   {
     return copy;
   }
+
+  // The selector is unregistered.
+  struct objc_unreg_selector *usel = (struct objc_unreg_selector *)aSel;
+
   // Create a copy of this selector.
-  copy = selector_pool_alloc();
-  copy->name = aSel->name;
-  copy->types = (NULL == aSel->types) ? NULL : aSel->types;
+  struct objc_unreg_selector *fresh =
+      (struct objc_unreg_selector *)selector_pool_alloc();
+  fresh->name = usel->name;
+  fresh->types = (NULL == usel->types) ? NULL : usel->types;
   if (copyArgs)
   {
-    SEL untyped = selector_lookup(aSel->name, 0);
+    SEL untyped = selector_lookup(usel->name, 0);
     if (untyped != NULL)
     {
-      copy->name = sel_getName(untyped);
+      fresh->name = sel_getName(untyped);
     }
     else
     {
-      copy->name = strdup(aSel->name);
-      selector_name_copies += strlen(copy->name);
+      fresh->name = strdup(usel->name);
+      selector_name_copies += strlen(fresh->name);
     }
-    if (copy->types != NULL)
+    if (fresh->types != NULL)
     {
-      copy->types = strdup(copy->types);
-      selector_name_copies += strlen(copy->types);
+      fresh->types = strdup(fresh->types);
+      selector_name_copies += strlen(fresh->types);
     }
   }
   // Try to register the copy as the authoritative version
-  register_selector_locked(copy);
-  return copy;
+  register_selector_locked(fresh);
+  return (SEL)fresh;
 }
 
 PRIVATE uint32_t sel_nextTypeIndex(uint32_t untypedIdx, uint32_t idx)
@@ -458,7 +469,7 @@ PRIVATE uint32_t sel_nextTypeIndex(uint32_t untypedIdx, uint32_t idx)
 const char *sel_getName(SEL sel)
 {
   if (NULL == sel) { return "<null selector>"; }
-  const char *name = sel->name;
+  const char *name = NULL;
   if (isSelRegistered(sel))
   {
     struct sel_type_list * list = selLookup(sel_index(sel));
@@ -466,11 +477,13 @@ const char *sel_getName(SEL sel)
   }
   else
   {
-    SEL old = selector_lookup(sel->name, sel->types);
+    struct objc_unreg_selector *usel = (struct objc_unreg_selector *)sel;
+    SEL old = selector_lookup(usel->name, usel->types);
     if (NULL != old)
     {
       return sel_getName(old);
     }
+    name = usel->name;
   }
   if (NULL == name)
   {
@@ -490,7 +503,7 @@ BOOL sel_isEqual(SEL sel1, SEL sel2)
   {
     return sel1 == sel2;
   }
-  if (sel1->name == sel2->name)
+  if (sel1->name_ == sel2->name_)
   {
     return YES;
   }
@@ -602,13 +615,16 @@ PRIVATE void objc_register_selectors_from_class(Class class)
     objc_register_selectors_from_list(l);
   }
 }
-PRIVATE void objc_register_selector_array(SEL selectors, unsigned long count)
+
+PRIVATE void objc_register_selector_array(
+    struct objc_unreg_selector *selectors,
+    unsigned long count)
 {
   // GCC is broken and always sets the count to 0, so we ignore count until
   // we can throw stupid and buggy compilers in the bin.
   for (unsigned long i=0 ;  (NULL != selectors[i].name) ; i++)
   {
-    objc_register_selector(&selectors[i]);
+    objc_register_selector((SEL)&selectors[i]);
   }
 }
 

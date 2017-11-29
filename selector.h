@@ -18,6 +18,21 @@ struct sel_type_list
 };
 
 /**
+ * Unregistered selector.
+ */
+struct objc_unreg_selector
+{
+  /**
+   * The name of this selector.
+   */
+  const char *name;
+  /**
+   * The Objective-C type encoding of the message identified by this selector.
+   */
+  const char * types;
+};
+
+/**
  * Structure used to store selectors in the list.
  */
 struct objc_selector
@@ -27,7 +42,7 @@ struct objc_selector
     /**
      * The name of this selector.  Used for unregistered selectors.
      */
-    const char *name;
+    const char *name_;
     /**
      * The index of this selector in the selector table.  When a selector
      * is registered with the runtime, its name is replaced by an index
