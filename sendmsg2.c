@@ -63,7 +63,8 @@ Slot_t objc_msg_lookup_internal(id *receiver,
 {
 retry:;
   Class class = classForObject((*receiver));
-  Slot_t result = objc_dtable_lookup(class->dtable, selector->index);
+  uint32_t sel_id = sel_index(selector);
+  Slot_t result = objc_dtable_lookup(class->dtable, sel_id);
   if (UNLIKELY(0 == result))
   {
     dtable_t dtable = dtable_for_class(class);
@@ -72,13 +73,13 @@ retry:;
     {
       objc_send_initialize(*receiver);
       dtable = dtable_for_class(class);
-      result = objc_dtable_lookup(dtable, selector->index);
+      result = objc_dtable_lookup(dtable, sel_id);
     }
     else
     {
       // Check again incase another thread updated the dtable while we
       // weren't looking
-      result = objc_dtable_lookup(dtable, selector->index);
+      result = objc_dtable_lookup(dtable, sel_id);
     }
     if (0 == result)
     {
@@ -187,7 +188,7 @@ Slot_t objc_slot_lookup_super(struct objc_super *super, SEL selector)
   {
     Class class = super->class;
     Slot_t result = objc_dtable_lookup(dtable_for_class(class),
-        selector->index);
+        sel_index(selector));
     if (0 == result)
     {
       Class class = classForObject(receiver);
@@ -302,7 +303,8 @@ void objc_msg_profile(id receiver, IMP method,
  */
 Slot_t objc_get_slot(Class cls, SEL selector)
 {
-  Slot_t result = objc_dtable_lookup(cls->dtable, selector->index);
+  uint32_t sel_id = sel_index(selector);
+  Slot_t result = objc_dtable_lookup(cls->dtable, sel_id);
   if (0 == result)
   {
     void *dtable = dtable_for_class(cls);
@@ -310,13 +312,13 @@ Slot_t objc_get_slot(Class cls, SEL selector)
     if (dtable == uninstalled_dtable)
     {
       dtable = dtable_for_class(cls);
-      result = objc_dtable_lookup(dtable, selector->index);
+      result = objc_dtable_lookup(dtable, sel_id);
     }
     else
     {
       // Check again incase another thread updated the dtable while we
       // weren't looking
-      result = objc_dtable_lookup(dtable, selector->index);
+      result = objc_dtable_lookup(dtable, sel_id);
     }
     if (NULL == result)
     {

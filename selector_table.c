@@ -89,7 +89,7 @@ static const char *sel_getNameNonUnique(SEL sel)
   const char *name = sel->name;
   if (isSelRegistered(sel))
   {
-    struct sel_type_list * list = selLookup_locked(sel->index);
+    struct sel_type_list * list = selLookup_locked(sel_index(sel));
     name = (list == NULL) ? NULL : list->value;
   }
   if (NULL == name)
@@ -344,7 +344,7 @@ static inline void register_selector_locked(SEL aSel)
     // Make sure we only store one name
     aSel->name = sel_getNameNonUnique(untyped);
   }
-  uintptr_t uid = (uintptr_t)untyped->name;
+  uintptr_t uid = sel_index(untyped);
   TDD(uid = idx);
   DEBUG_LOG("Registering typed selector %d %s %s\n", (int)uid, sel_getNameNonUnique(aSel), sel_getType_np(aSel));
   add_selector_to_table(aSel, uid, idx);
@@ -352,7 +352,7 @@ static inline void register_selector_locked(SEL aSel)
   // Add this set of types to the list.
   // This is quite horrible.  Most selectors will only have one type
   // encoding, so we're wasting a lot of memory like this.
-  struct sel_type_list *typeListHead = selLookup_locked(untyped->index);
+  struct sel_type_list *typeListHead = selLookup_locked(sel_index(untyped));
   struct sel_type_list *typeList =
     (struct sel_type_list *)selector_pool_alloc();
   typeList->value = aSel->types;
@@ -440,12 +440,13 @@ PRIVATE uint32_t sel_nextTypeIndex(uint32_t untypedIdx, uint32_t idx)
   while (NULL != list)
   {
     SEL sel = selector_lookup(selName, list->value);
-    if (sel->index == untypedIdx) { return 0; }
+    uint32_t sel_id = sel_index(sel);
+    if (sel_id == untypedIdx) { return 0; }
     if (found)
     {
-      return sel->index;
+      return sel_id;
     }
-    found = (sel->index == idx);
+    found = (sel_id == idx);
   }
   return 0;
 }
@@ -460,7 +461,7 @@ const char *sel_getName(SEL sel)
   const char *name = sel->name;
   if (isSelRegistered(sel))
   {
-    struct sel_type_list * list = selLookup(sel->index);
+    struct sel_type_list * list = selLookup(sel_index(sel));
     name = (list == NULL) ? NULL : list->value;
   }
   else
@@ -526,7 +527,7 @@ unsigned sel_copyTypes_np(const char *selName, const char **types, unsigned coun
   SEL untyped = selector_lookup(selName, 0);
   if (untyped == NULL) { return 0; }
 
-  struct sel_type_list *l = selLookup(untyped->index);
+  struct sel_type_list *l = selLookup(sel_index(untyped));
   // Skip the head, which just contains the name, not the types.
   l = l->next;
 
@@ -559,7 +560,7 @@ unsigned sel_copyTypedSelectors_np(const char *selName, SEL *const sels, unsigne
   SEL untyped = selector_lookup(selName, 0);
   if (untyped == NULL) { return 0; }
 
-  struct sel_type_list *l = selLookup(untyped->index);
+  struct sel_type_list *l = selLookup(sel_index(untyped));
   // Skip the head, which just contains the name, not the types.
   l = l->next;
 
@@ -625,7 +626,7 @@ SEL sel_get_typed_uid (const char *name, const char *types)
   SEL sel = selector_lookup(name, types);
   if (NULL == sel) { return sel_registerTypedName_np(name, types); }
 
-  struct sel_type_list *l = selLookup(sel->index);
+  struct sel_type_list *l = selLookup(sel_index(sel));
   // Skip the head, which just contains the name, not the types.
   l = l->next;
   if (NULL != l)
@@ -641,7 +642,7 @@ SEL sel_get_any_typed_uid (const char *name)
   SEL sel = selector_lookup(name, 0);
   if (NULL == sel) { return sel_registerName(name); }
 
-  struct sel_type_list *l = selLookup(sel->index);
+  struct sel_type_list *l = selLookup(sel_index(sel));
   // Skip the head, which just contains the name, not the types.
   l = l->next;
   if (NULL != l)

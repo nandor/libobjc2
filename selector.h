@@ -33,7 +33,7 @@ struct objc_selector
      * is registered with the runtime, its name is replaced by an index
      * uniquely identifying this selector.  The index is used for dispatch.
      */
-    uintptr_t index;
+    uintptr_t index_;
   };
   /**
    * The Objective-C type encoding of the message identified by this selector.
@@ -42,13 +42,21 @@ struct objc_selector
 };
 
 /**
+ * Returns the index of a selector.
+ */
+static inline uint32_t sel_index(SEL aSel)
+{
+  return aSel->index_;
+}
+
+/**
  * Returns the untyped variant of a selector.
  */
 __attribute__((unused))
 static uint32_t get_untyped_idx(SEL aSel)
 {
   SEL untyped = sel_registerTypedName_np(sel_getName(aSel), 0);
-  return untyped->index;
+  return sel_index(untyped);
 }
 
 __attribute__((unused))

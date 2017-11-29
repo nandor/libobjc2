@@ -146,8 +146,11 @@ static void collectMethodsForMethodListToSparseArray(
   }
   for (unsigned i=0 ; i<list->count ; i++)
   {
-    SparseArrayInsert(sarray, list->methods[i].selector->index,
-        (void*)&list->methods[i]);
+    SparseArrayInsert(
+        sarray,
+        sel_index(list->methods[i].selector),
+        (void*)&list->methods[i]
+    );
   }
 }
 
@@ -505,7 +508,7 @@ static BOOL installMethodInDtable(Class class,
                                   BOOL replaceExisting)
 {
   ASSERT(uninstalled_dtable != dtable);
-  uint32_t sel_id = method->selector->index;
+  uint32_t sel_id = sel_index(method->selector);
   struct objc_slot *slot = SparseArrayLookup(dtable, sel_id);
   if (NULL != slot)
   {
@@ -882,7 +885,7 @@ PRIVATE void objc_send_initialize(id object)
   }
 
   struct objc_slot *initializeSlot = skipMeta ? 0 :
-      objc_dtable_lookup(dtable, initializeSel->index);
+      objc_dtable_lookup(dtable, sel_index(initializeSel));
 
   // If there's no initialize method, then don't bother installing and
   // removing the initialize dtable, just install both dtables correctly now
