@@ -88,11 +88,6 @@ set(TYPE_DEPENDENT_DISPATCH TRUE CACHE BOOL
 if (TYPE_DEPENDENT_DISPATCH)
 	add_definitions(-DTYPE_DEPENDENT_DISPATCH)
 endif ()
-set(ENABLE_TRACING FALSE CACHE BOOL
-	"Enable tracing support (slower, not recommended for deployment)")
-if (ENABLE_TRACING)
-	add_definitions(-DWITH_TRACING=1)
-endif (ENABLE_TRACING)
 
 
 set(BOEHM_GC FALSE CACHE BOOL
