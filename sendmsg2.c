@@ -305,21 +305,10 @@ Slot_t objc_get_slot(Class cls, SEL selector)
 {
   uint32_t sel_id = sel_index(selector);
   Slot_t result = objc_dtable_lookup(cls->dtable, sel_id);
-  if (0 == result)
+  if (NULL == result)
   {
     void *dtable = dtable_for_class(cls);
-    /* Install the dtable if it hasn't already been initialized. */
-    if (dtable == uninstalled_dtable)
-    {
-      dtable = dtable_for_class(cls);
-      result = objc_dtable_lookup(dtable, sel_id);
-    }
-    else
-    {
-      // Check again incase another thread updated the dtable while we
-      // weren't looking
-      result = objc_dtable_lookup(dtable, sel_id);
-    }
+    result = objc_dtable_lookup(dtable, sel_id);
     if (NULL == result)
     {
       if (!isSelRegistered(selector))

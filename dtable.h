@@ -6,13 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#ifdef __OBJC_LOW_MEMORY__
-typedef struct objc_dtable* dtable_t;
-struct objc_slot* objc_dtable_lookup(dtable_t dtable, uint32_t uid);
-#else
 typedef SparseArray* dtable_t;
 # define objc_dtable_lookup SparseArrayLookup
-#endif
 
 /**
  * Pointer to the sparse array representing the pretend (uninstalled) dtable.
@@ -119,8 +114,7 @@ void objc_update_dtable_for_class(Class);
  * Adds a single method list to a class.  This is used when loading categories,
  * and is faster than completely rebuilding the dtable.
  */
-void add_method_list_to_class(Class cls,
-                              struct objc_method_list *list);
+void add_method_list_to_class(Class cls, struct objc_method_list *list);
 
 /**
  * Destroys a dtable.

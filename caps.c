@@ -23,9 +23,6 @@ static const int32_t caps =
 #ifdef TYPE_DEPENDENT_DISPATCH
   (1<<OBJC_CAP_TYPE_DEPENDENT_DISPATCH) |
 #endif
-#ifdef __OBJC_LOW_MEMORY__
-  (1<<OBJC_CAP_LOW_MEMORY) |
-#endif
 #ifdef ENABLE_GC
   (1<<OBJC_CAP_GARBAGE_COLLECTION) |
 #endif
