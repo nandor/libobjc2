@@ -29,6 +29,82 @@ PRIVATE dtable_t uninstalled_dtable;
 # define ENOTSUP -1
 #endif
 
+/**
+ * Structure for maintaining a linked list of temporary dtables.  When sending
+ * an +initialize message to a class, we create a temporary dtables and store
+ * it in a linked list.  This is then used when sending other messages to
+ * instances of classes in the middle of initialisation.
+ */
+typedef struct _InitializingDtable
+{
+  /** The class that owns the dtable. */
+  Class class;
+  /** The dtable for this class. */
+  dtable_t dtable;
+  /** The next uninstalled dtable in the list. */
+  struct _InitializingDtable *next;
+} InitializingDtable;
+
+/** Head of the list of temporary dtables.  Protected by initialize_lock. */
+extern InitializingDtable *temporary_dtables;
+extern mutex_t initialize_lock;
+
+int objc_sync_enter(id object);
+int objc_sync_exit(id object);
+
+/**
+ * Returns the dtable for a given class.  If we are currently in an +initialize
+ * method then this will block if called from a thread other than the one
+ * running the +initialize method.
+ */
+PRIVATE dtable_t dtable_for_class(Class cls)
+{
+  if (classHasInstalledDtable(cls))
+  {
+    return cls->dtable;
+  }
+
+  dtable_t dtable = uninstalled_dtable;
+
+  {
+    LOCK_FOR_SCOPE(&initialize_lock);
+    if (classHasInstalledDtable(cls))
+    {
+      return cls->dtable;
+    }
+    /* This is a linear search, and so, in theory, could be very slow.  It
+     * is O(n) where n is the number of +initialize methods on the stack.
+     * In practice, this is a very small number.  Profiling with GNUstep
+     * showed that this peaks at 8. */
+    InitializingDtable *buffer = temporary_dtables;
+    while (NULL != buffer)
+    {
+      if (buffer->class == cls)
+      {
+        dtable = buffer->dtable;
+        break;
+      }
+      buffer = buffer->next;
+    }
+  }
+
+  if (dtable != uninstalled_dtable)
+  {
+    // Make sure that we block if +initialize is still running.  We do this
+    // after we've released the initialize lock, so that the real dtable
+    // can be installed.  This acquires / releases a recursive mutex, so if
+    // this mutex is already held by this thread then this will proceed
+    // immediately.  If it's held by another thread (i.e. the one running
+    // +initialize) then we block here until it's run.  We don't need to do
+    // this if the dtable is the uninstalled dtable, because that means
+    // +initialize has not yet been sent, so we can wait until something
+    // triggers it before needing any synchronisation.
+    objc_sync_enter((id)cls);
+    objc_sync_exit((id)cls);
+  }
+  return dtable;
+}
+
 /** Head of the list of temporary dtables.  Protected by initialize_lock. */
 PRIVATE InitializingDtable *temporary_dtables;
 /** Lock used to protect the temporary dtables list. */
