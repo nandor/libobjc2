@@ -14,10 +14,23 @@
 
   mov   (\receiver), %r10               # Load the dtable from the class
 1:                                        # classLoaded
-  mov   DTABLE_OFFSET(%r10), %r10       # Load the dtable from the class into r10
+  mov   (\sel), %r11                    # Load the selector index into %eax
+
+  btr   $63, %r11
+  jnc   5f
+  test  $1, %r11b
+  jnz   15f
+
+  call  CDECL(abort)
+
+15:
   mov   %rax, -8(%rsp)                  # %rax contains information for variadic calls
   mov   %rbx, -16(%rsp)                 # On the fast path, spill into the red zone
-  mov   (\sel), %eax                    # Load the selector index into %eax
+  mov   DTABLE_OFFSET(%r10), %r10       # Load the dtable from the class into r10
+
+  mov   %r11d, %eax
+  shr   $1, %eax
+
   mov   SHIFT_OFFSET(%r10), %r11d       # Load the shift (dtable size) into r11
   cmpl  $8, %r11d                       # If this is a small dtable, jump to the small dtable handlers
   je    2f

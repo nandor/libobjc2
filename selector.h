@@ -1,6 +1,9 @@
 #ifndef OBJC_SELECTOR_H_INCLUDED
 #define OBJC_SELECTOR_H_INCLUDED
 
+#include <assert.h>
+#include <stdlib.h>
+
 /**
  * Unregistered selector.
  */
@@ -45,7 +48,15 @@ struct objc_selector
  */
 static inline uint32_t sel_index(SEL aSel)
 {
-  return aSel->index_;
+  assert(aSel->index_ & ~(~0ull >> 1ull));
+  if (aSel->index_ & 1)
+  {
+    return aSel->index_ >> 1;
+  }
+  else
+  {
+    abort();
+  }
 }
 
 /**

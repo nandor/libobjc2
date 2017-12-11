@@ -43,9 +43,17 @@ struct sel_type_list
  */
 struct sel_meta
 {
+  uint32_t index;
   struct sel_type_list type_list;
 };
 
+/**
+ * Selector dispatch table.
+ */
+struct sel_dtable
+{
+  uint32_t index;
+};
 
 
 // Define the pool allocator for selectors, types and metadata.
@@ -108,11 +116,7 @@ static inline struct sel_type_list *selLookup(uint32_t idx)
 
 PRIVATE inline BOOL isSelRegistered(SEL sel)
 {
-  if (sel->index_ < (uintptr_t)selector_count)
-  {
-    return YES;
-  }
-  return NO;
+  return (sel->index_ & ~(~0ull >> 1ull)) != 0;
 }
 
 static const char *sel_getNameNonUnique(SEL sel)
@@ -327,6 +331,7 @@ static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
 {
   DEBUG_LOG("Sel %s uid: %d, idx: %d, hash: %d\n", sel_getNameNonUnique(aSel), uid, idx, hash_selector(aSel));
   struct sel_meta *meta = meta_pool_alloc();
+  meta->index = idx;
   meta->type_list.value = aSel->name_;
   meta->type_list.next = 0;
   // Store the name.
@@ -346,7 +351,7 @@ static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
   // Store the selector.
   selector_insert(sel_table, aSel);
   // Set the selector's name to the uid.
-  aSel->index_ = (uintptr_t)uid;
+  aSel->index_ = ((uintptr_t)uid << 1ull) | 1ull | ~(~0ull >> 1ull);
 }
 /**
  * Really registers a selector.  Must be called with the selector table locked.
