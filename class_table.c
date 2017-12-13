@@ -290,6 +290,8 @@ void __objc_resolve_class_links(void)
 
 static void reload_class(struct objc_class *class, struct objc_class *old)
 {
+  abort();
+  /*
   const char *superclassName = (char*)class->super_class;
   class->super_class = class_table_get_safe(superclassName);
   // Checking the instance sizes are equal here is a quick-and-dirty test.
@@ -370,6 +372,7 @@ static void reload_class(struct objc_class *class, struct objc_class *old)
   {
     objc_init_protocols(class->protocols);
   }
+  */
 }
 
 /**
@@ -410,8 +413,8 @@ PRIVATE void objc_load_class(struct objc_class *class)
   objc_register_selectors_from_class(class->isa);
 
   // Set the uninstalled dtable.  The compiler could do this as well.
-  class->dtable = uninstalled_dtable;
-  class->isa->dtable = uninstalled_dtable;
+  class->dtable = NULL;
+  class->isa->dtable = NULL;
 
   // If this is a root class, make the class into the metaclass's superclass.
   // This means that all instance methods will be available to the class.

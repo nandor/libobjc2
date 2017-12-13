@@ -21,40 +21,6 @@
 # define TDD(x)
 #endif
 
-/**
- * Structure used to store the types for a selector.  This allows for a quick
- * test to see whether a selector is polymorphic and allows enumeration of all
- * type encodings for a given selector.
- *
- * This is the same size as an objc_selector, so we can allocate them from the
- * objc_selector pool.
- *
- * Note: For ABI v10, we can probably do something a bit more sensible here and
- * make selectors into a linked list.
- */
-struct sel_type_list
-{
-  const char *value;
-  struct sel_type_list *next;
-};
-
-/**
- * Additional information attached to a selector.
- */
-struct sel_meta
-{
-  uint32_t index;
-  struct sel_type_list type_list;
-};
-
-/**
- * Selector dispatch table.
- */
-struct sel_dtable
-{
-  uint32_t index;
-};
-
 
 // Define the pool allocator for selectors, types and metadata.
 #define POOL_NAME type_list
@@ -112,6 +78,12 @@ static inline struct sel_type_list *selLookup(uint32_t idx)
 {
   LOCK_FOR_SCOPE(&selector_table_lock);
   return selLookup_locked(idx);
+}
+
+PRIVATE struct sel_meta *sel_meta(SEL sel)
+{
+  LOCK_FOR_SCOPE(&selector_table_lock);
+  return selector_list[sel_index(sel)];
 }
 
 PRIVATE inline BOOL isSelRegistered(SEL sel)
@@ -305,12 +277,6 @@ PRIVATE void log_selector_memory_usage(void)
 
 
 /**
- * Resizes the dtables to ensure that they can store as many selectors as
- * exist.
- */
-void objc_resize_dtables(uint32_t);
-
-/**
  * Create data structures to store selectors.
  */
 PRIVATE void init_selector_tables()
@@ -331,7 +297,7 @@ static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
 {
   DEBUG_LOG("Sel %s uid: %d, idx: %d, hash: %d\n", sel_getNameNonUnique(aSel), uid, idx, hash_selector(aSel));
   struct sel_meta *meta = meta_pool_alloc();
-  meta->index = idx;
+  meta->dtable = NULL;
   meta->type_list.value = aSel->name_;
   meta->type_list.next = 0;
   // Store the name.
@@ -363,7 +329,6 @@ static inline void register_selector_locked(struct objc_unreg_selector *aSel)
   {
     DEBUG_LOG("Registering selector %d %s\n", (int)idx, sel_getNameNonUnique(aSel));
     add_selector_to_table((SEL)aSel, idx, idx);
-    objc_resize_dtables(selector_count);
     return;
   }
   SEL untyped = selector_lookup(aSel->name, 0);
@@ -397,7 +362,6 @@ static inline void register_selector_locked(struct objc_unreg_selector *aSel)
   typeList->value = aSel->types;
   typeList->next = typeListHead->next;
   typeListHead->next = typeList;
-  objc_resize_dtables(selector_count);
 }
 
 /**

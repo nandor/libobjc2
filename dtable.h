@@ -3,59 +3,55 @@
 #include "sarray2.h"
 #include "objc/slot.h"
 #include "visibility.h"
+#include "selector.h"
 #include <stdint.h>
 #include <stdio.h>
 
-typedef SparseArray* dtable_t;
-# define objc_dtable_lookup SparseArrayLookup
+
 
 /**
- * Pointer to the sparse array representing the pretend (uninstalled) dtable.
+ * Checks whether the class supports ARC.
+ *
+ * This can be used before the dtable is installed.
  */
-PRIVATE extern dtable_t uninstalled_dtable;
+void checkARCAccessors(Class cls);
 
 /**
- * Returns the dtable for a given class.  If we are currently in an +initialize
- * method then this will block if called from a thread other than the one
- * running the +initialize method.
+ * Returns or creates a dispatch table.
  */
-dtable_t dtable_for_class(Class cls);
+struct sel_dtable *dtable_get(SEL sel);
 
 /**
- * Returns whether a class has an installed dtable.
+ * Finds an implementation in the dtable.
  */
-static inline int classHasInstalledDtable(struct objc_class *cls)
-{
-  return (cls->dtable != uninstalled_dtable);
-}
+struct objc_slot *dtable_lookup(struct sel_dtable *dtable, Class class);
 
 /**
- * Returns whether a class has had a dtable created.  The dtable may be
- * installed, or stored in the look-aside buffer.
+ * Adds a method to a dtable.
  */
-static inline int classHasDtable(struct objc_class *cls)
-{
-  return (dtable_for_class(cls) != uninstalled_dtable);
-}
+void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL replace);
 
 /**
- * Updates the dtable for a class and its subclasses.  Must be called after
- * modifying a class's method list.
+ * Updates the implementation of a method.
  */
-void objc_update_dtable_for_class(Class);
-/**
- * Adds a single method list to a class.  This is used when loading categories,
- * and is faster than completely rebuilding the dtable.
- */
-void add_method_list_to_class(Class cls, struct objc_method_list *list);
+void update_method_for_class(Class class, Method method);
 
 /**
- * Destroys a dtable.
+ * Sends the initialize message to a class.
  */
-void free_dtable(dtable_t dtable);
+void objc_send_initialize(id object);
 
 /**
- * Checks whether the class supports ARC.  This can be used before the dtable
- * is installed.
+ * Checks if a class was initialised.
  */
-void checkARCAccessorsSlow(Class cls);
+BOOL is_initialised(Class class);
+
+/**
+ * Adds methods to a class.
+ */
+void add_method_list_to_class(Class cls, struct objc_method_list *methods);
+
+/**
+ * Removes the hidden class.
+ */
+void remove_class(Class class);

@@ -23,14 +23,14 @@ static void createNSBlockSubclass(Class superclass, Class newClass,
 	//metaClass->class_pointer = superclass->class_pointer;
 	//metaClass->super_class = superclass->class_pointer;
 	metaClass->info = objc_class_flag_meta;
-	metaClass->dtable = uninstalled_dtable;
+	metaClass->dtable = NULL;
 
 	// Set up the new class
 	newClass->isa = metaClass;
 	newClass->super_class = (Class)superclass->name;
 	newClass->name = name;
 	newClass->info = objc_class_flag_class;
-	newClass->dtable = uninstalled_dtable;
+	newClass->dtable = NULL;
 
 	LOCK_RUNTIME_FOR_SCOPE();
 	class_table_insert(newClass);

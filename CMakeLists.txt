@@ -16,7 +16,8 @@ set(libobjc_VERSION 4.6)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions")
 # Build configuration
-add_definitions( -DGNUSTEP -D__OBJC_RUNTIME_INTERNAL__=1)
+add_definitions(-DGNUSTEP -D__OBJC_RUNTIME_INTERNAL__=1)
+add_definitions(-Werror)
 
 set(libobjc_ASM_SRCS
 	block_trampolines.S

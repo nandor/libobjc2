@@ -57,58 +57,38 @@ static
 // Uncomment for debugging
 //__attribute__((noinline))
 __attribute__((always_inline))
-Slot_t objc_msg_lookup_internal(id *receiver,
-                                SEL selector,
-                                id sender)
+Slot_t objc_msg_lookup_internal(id *receiver, SEL sel, id sender)
 {
-retry:;
-  Class class = classForObject((*receiver));
-  uint32_t sel_id = sel_index(selector);
-  Slot_t result = objc_dtable_lookup(class->dtable, sel_id);
-  if (UNLIKELY(0 == result))
+  if (!isSelRegistered(sel))
   {
-    dtable_t dtable = dtable_for_class(class);
-    /* Install the dtable if it hasn't already been initialized. */
-    if (dtable == uninstalled_dtable)
-    {
-      objc_send_initialize(*receiver);
-      dtable = dtable_for_class(class);
-      result = objc_dtable_lookup(dtable, sel_id);
-    }
-    else
-    {
-      // Check again incase another thread updated the dtable while we
-      // weren't looking
-      result = objc_dtable_lookup(dtable, sel_id);
-    }
-    if (0 == result)
-    {
-      if (!isSelRegistered(selector))
-      {
-        objc_register_selector(selector);
-        // This should be a tail call, but GCC is stupid and won't let
-        // us tail call an always_inline function.
-        goto retry;
-      }
-      if ((result = objc_dtable_lookup(dtable, get_untyped_idx(selector))))
-      {
-        return _objc_selector_type_mismatch(class, selector, result);
-      }
-      id newReceiver = objc_proxy_lookup(*receiver, selector);
-      // If some other library wants us to play forwarding games, try
-      // again with the new object.
-      if (nil != newReceiver)
-      {
-        *receiver = newReceiver;
-        return objc_msg_lookup_sender(receiver, selector, sender);
-      }
-      if (0 == result)
-      {
-        result = __objc_msg_forward3(*receiver, selector);
-      }
-    }
+    sel = objc_register_selector(sel);
   }
-  return result;
+
+  Class cls = classForObject(*receiver);
+  if (!is_initialised(cls))
+  {
+    objc_send_initialize(*receiver);
+  }
+
+  struct objc_slot *slot;
+  if ((slot = dtable_lookup(dtable_get(sel), cls)))
+  {
+    return slot;
+  }
+  if ((slot = dtable_lookup(dtable_get(sel_getUntyped(sel)), cls)))
+  {
+    return _objc_selector_type_mismatch(cls, sel, slot);
+  }
+
+  id newReceiver = objc_proxy_lookup(*receiver, sel);
+  // If some other library wants us to play forwarding games, try
+  // again with the new object.
+  if (nil != newReceiver)
+  {
+    *receiver = newReceiver;
+    return objc_msg_lookup_sender(receiver, sel, sender);
+  }
+  return __objc_msg_forward3(*receiver, sel);
 }
 
 PRIVATE
@@ -184,38 +164,18 @@ Slot_t objc_msg_lookup_sender(id *receiver, SEL selector, id sender)
 Slot_t objc_slot_lookup_super(struct objc_super *super, SEL selector)
 {
   id receiver = super->receiver;
-  if (receiver)
-  {
-    Class class = super->class;
-    Slot_t result = objc_dtable_lookup(dtable_for_class(class),
-        sel_index(selector));
-    if (0 == result)
-    {
-      Class class = classForObject(receiver);
-      // Dtable should always be installed in the superclass
-      // Unfortunately, some stupid code (PyObjC) decides to use this
-      // mechanism for everything
-      if (dtable_for_class(class) == uninstalled_dtable)
-      {
-        if (class_isMetaClass(class))
-        {
-          objc_send_initialize(receiver);
-        }
-        else
-        {
-          objc_send_initialize((id)class);
-        }
-        objc_send_initialize((id)class);
-        return objc_slot_lookup_super(super, selector);
-      }
-      result = &nil_slot;
-    }
-    return result;
-  }
-  else
+  if (!receiver)
   {
     return &nil_slot;
   }
+
+  Class cls = super->class;
+  if (!is_initialised(cls))
+  {
+    objc_send_initialize(receiver);
+  }
+
+  return dtable_lookup(dtable_get(selector), cls);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -301,28 +261,26 @@ void objc_msg_profile(id receiver, IMP method,
 /**
  * Looks up a slot without invoking any forwarding mechanisms
  */
-Slot_t objc_get_slot(Class cls, SEL selector)
+Slot_t objc_get_slot(Class cls, SEL sel)
 {
-  uint32_t sel_id = sel_index(selector);
-  Slot_t result = objc_dtable_lookup(cls->dtable, sel_id);
-  if (NULL == result)
+  if (!isSelRegistered(sel))
   {
-    void *dtable = dtable_for_class(cls);
-    result = objc_dtable_lookup(dtable, sel_id);
-    if (NULL == result)
-    {
-      if (!isSelRegistered(selector))
-      {
-        objc_register_selector(selector);
-        return objc_get_slot(cls, selector);
-      }
-      if ((result = objc_dtable_lookup(dtable, get_untyped_idx(selector))))
-      {
-        return _objc_selector_type_mismatch(cls, selector, result);
-      }
-    }
+    objc_register_selector(sel);
   }
-  return result;
+
+  struct objc_slot *slot;
+
+  if ((slot = dtable_lookup(dtable_get(sel), cls)))
+  {
+    return slot;
+  }
+
+  if ((slot = dtable_lookup(dtable_get(sel_getUntyped(sel)), cls)))
+  {
+    return _objc_selector_type_mismatch(cls, sel, slot);
+  }
+
+  return NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

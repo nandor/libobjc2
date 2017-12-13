@@ -14,6 +14,7 @@
 
   mov   (\receiver), %r10               # Load the dtable from the class
 1:                                        # classLoaded
+  jmp   5f
   mov   (\sel), %r11                    # Load the selector index into %eax
 
   btr   $63, %r11

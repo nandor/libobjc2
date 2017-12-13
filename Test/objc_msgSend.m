@@ -49,7 +49,7 @@ __attribute__((objc_root_class))
          : (float) f9
          : (float) f10;
 @end
-@implementation Test 
+@implementation Test
 - foo
 {
 	assert((id)1 == self);

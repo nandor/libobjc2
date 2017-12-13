@@ -211,7 +211,7 @@ static Class allocateHiddenClass(Class superclass)
 		objc_class_flag_new_abi | objc_class_flag_hidden_class |
 		objc_class_flag_assoc_class;
 	newClass->super_class = superclass;
-	newClass->dtable = uninstalled_dtable;
+	newClass->dtable = NULL;
 	newClass->instance_size = superclass->instance_size;
 
 	LOCK_RUNTIME_FOR_SCOPE();
@@ -247,8 +247,7 @@ static void deallocHiddenClass(id obj, SEL _cmd)
 	DESTROY_LOCK(&list->lock);
 	cleanupReferenceList(list);
 	freeReferenceList(list->next);
-	fprintf(stderr, "Deallocating dtable %p\n", hiddenClass->dtable);
-	free_dtable(hiddenClass->dtable);
+	remove_class(hiddenClass);
 	// We shouldn't have any subclasses left at this point
 	assert(hiddenClass->subclass_list == 0);
 	// Remove the class from the subclass list of its superclass

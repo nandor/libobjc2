@@ -21,7 +21,7 @@ static void register_methods(struct objc_class *cls, struct objc_method_list *l)
   // Update the dtable to catch the new methods, if the dtable has been
   // created (don't bother creating dtables for classes when categories are
   // loaded if the class hasn't received any messages yet.
-  if (classHasDtable(cls))
+  if (cls->dtable)
   {
     add_method_list_to_class(cls, l);
   }

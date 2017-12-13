@@ -101,13 +101,13 @@ static void objc_updateDtableForClassContainingMethod(Method m)
   {
     if (class_getInstanceMethodNonrecursive(nextClass, sel) == m)
     {
-      objc_update_dtable_for_class(nextClass);
+      update_method_for_class(nextClass, m);
       return;
     }
     Class meta = object_getClass((id)nextClass);
     if (class_getInstanceMethodNonrecursive(meta, sel) == m)
     {
-      objc_update_dtable_for_class(meta);
+      update_method_for_class(meta, m);
       return;
     }
   }
@@ -196,7 +196,7 @@ BOOL class_addMethod(Class cls, SEL name, IMP imp, const char *types)
   methods->methods[0].types = strdup(types);
   methods->methods[0].imp = imp;
 
-  if (objc_test_class_flag(cls, objc_class_flag_resolved))
+  if (cls->dtable)
   {
     add_method_list_to_class(cls, methods);
   }
@@ -354,7 +354,7 @@ id class_createInstance(Class cls, size_t extraBytes)
   if (Nil == cls) { return nil; }
   id obj = gc->allocate_class(cls, extraBytes);
   obj->isa = cls;
-  checkARCAccessorsSlow(cls);
+  checkARCAccessors(cls);
   call_cxx_construct(obj);
   return obj;
 }
@@ -378,6 +378,8 @@ Method class_getInstanceMethod(Class aClass, SEL aSelector)
 {
   CHECK_ARG(aClass);
   CHECK_ARG(aSelector);
+  /*
+  FIXME
   // If the class has a dtable installed, then we can use the fast path
   if (classHasInstalledDtable(aClass))
   {
@@ -398,6 +400,7 @@ Method class_getInstanceMethod(Class aClass, SEL aSelector)
     // Then do the slow lookup to find the method.
     return class_getInstanceMethodNonrecursive(slot->owner, aSelector);
   }
+  */
   Method m = class_getInstanceMethodNonrecursive(aClass, aSelector);
   if (NULL != m)
   {
@@ -496,7 +499,7 @@ IMP class_replaceMethod(Class cls, SEL name, IMP imp, const char *types)
 
   if (objc_test_class_flag(cls, objc_class_flag_resolved))
   {
-    objc_update_dtable_for_class(cls);
+    update_method_for_class(cls, method);
   }
 
   return old;
@@ -669,14 +672,6 @@ void objc_disposeClassPair(Class cls)
   freeMethodLists(cls);
   freeMethodLists(meta);
   freeIvarLists(cls);
-  if (cls->dtable != uninstalled_dtable)
-  {
-    free_dtable(cls->dtable);
-  }
-  if (meta->dtable != uninstalled_dtable)
-  {
-    free_dtable(meta->dtable);
-  }
 
   // Free the class and metaclass
   gc->free(meta);
@@ -717,7 +712,7 @@ Class objc_allocateClassPair(Class superclass, const char *name, size_t extraByt
   metaClass->name = strdup(name);
   metaClass->info = objc_class_flag_meta | objc_class_flag_user_created |
     objc_class_flag_new_abi;
-  metaClass->dtable = uninstalled_dtable;
+  metaClass->dtable = NULL;
   metaClass->instance_size = sizeof(struct objc_class);
 
   // Set up the new class
@@ -729,7 +724,7 @@ Class objc_allocateClassPair(Class superclass, const char *name, size_t extraByt
   newClass->name = strdup(name);
   newClass->info = objc_class_flag_class | objc_class_flag_user_created |
     objc_class_flag_new_abi;
-  newClass->dtable = uninstalled_dtable;
+  newClass->dtable = NULL;
 
   if (Nil == superclass)
   {

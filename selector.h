@@ -5,6 +5,43 @@
 #include <stdlib.h>
 
 /**
+ * Structure used to store the types for a selector.  This allows for a quick
+ * test to see whether a selector is polymorphic and allows enumeration of all
+ * type encodings for a given selector.
+ *
+ * This is the same size as an objc_selector, so we can allocate them from the
+ * objc_selector pool.
+ *
+ * Note: For ABI v10, we can probably do something a bit more sensible here and
+ * make selectors into a linked list.
+ */
+struct sel_type_list
+{
+  const char *value;
+  struct sel_type_list *next;
+};
+
+/**
+ * Selector dispatch table.
+ */
+struct sel_dtable
+{
+  uint32_t size;
+  uint32_t capacity;
+  uint32_t index;
+  struct objc_slot **slots;
+};
+
+/**
+ * Additional information attached to a selector.
+ */
+struct sel_meta
+{
+  struct sel_dtable *dtable;
+  struct sel_type_list type_list;
+};
+
+/**
  * Unregistered selector.
  */
 struct objc_unreg_selector
@@ -46,18 +83,23 @@ struct objc_selector
 /**
  * Returns the index of a selector.
  */
-static inline uint32_t sel_index(SEL aSel)
+static inline uint32_t sel_index(SEL sel)
 {
-  assert(aSel->index_ & ~(~0ull >> 1ull));
-  if (aSel->index_ & 1)
+  assert(sel->index_ & ~(~0ull >> 1ull));
+  if (sel->index_ & 1)
   {
-    return aSel->index_ >> 1;
+    return sel->index_ >> 1;
   }
   else
   {
-    abort();
+    return ((struct sel_dtable *)(sel->index_ & (~0ull >> 1ull)))->index;
   }
 }
+
+/**
+ * Returns the meta object for a selector.
+ */
+struct sel_meta *sel_meta(SEL sel);
 
 /**
  * Returns the untyped variant of a selector.

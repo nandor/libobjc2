@@ -17,7 +17,10 @@ int main(int argc, char** argv) {
 	Class i32meta = object_getClass(objc_getClass("Exchange"));
 	Method m1 = class_getInstanceMethod(i32meta, @selector(test1));
 	Method m2 = class_getInstanceMethod(i32meta, @selector(test2));
+  assert(1024 == [Exchange test1]);
+  assert(2048 == [Exchange test2]);
 	method_exchangeImplementations(m1, m2);
 	assert(2048 == [Exchange test1]);
+  assert(1024 == [Exchange test2]);
 }
 
