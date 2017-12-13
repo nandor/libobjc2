@@ -3,8 +3,6 @@
   cmp   (\idx * 16)(%r11), %rax
   jne   \next
   movq  (\idx * 16 + 8)(%r11), %r10
-  test  %r10, %r10
-  jz    15f
   cmpq  (\idx * 16)(%r11), %rax
   jne   15f
   mov  -8(%rsp), %rax
