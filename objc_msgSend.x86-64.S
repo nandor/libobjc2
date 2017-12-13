@@ -1,4 +1,16 @@
 
+.macro DTABLE next, idx
+  cmp   (\idx * 16)(%r11), %rax
+  jne   \next
+  movq  (\idx * 16 + 8)(%r11), %r10
+  test  %r10, %r10
+  jz    15f
+  cmpq  (\idx * 16)(%r11), %rax
+  jne   15f
+  mov  -8(%rsp), %rax
+  jmp   *%r10
+.endm
+
 .macro MSGSEND receiver, sel
   .cfi_startproc                        # Start emitting unwind data.  We
                                         # don't actually care about any of
@@ -14,44 +26,18 @@
 
   mov   (\receiver), %r10               # Load the dtable from the class
 1:                                        # classLoaded
-  jmp   5f
   mov   (\sel), %r11                    # Load the selector index into %eax
 
   btr   $63, %r11
   jnc   5f
-  test  $1, %r11b
-  jnz   15f
 
-  call  CDECL(abort)
+  mov   %rax, -8(%rsp)
+  mov   %r10, %rax
 
-15:
-  mov   %rax, -8(%rsp)                  # %rax contains information for variadic calls
-  mov   %rbx, -16(%rsp)                 # On the fast path, spill into the red zone
-  mov   DTABLE_OFFSET(%r10), %r10       # Load the dtable from the class into r10
-
-  mov   %r11d, %eax
-  shr   $1, %eax
-
-  mov   SHIFT_OFFSET(%r10), %r11d       # Load the shift (dtable size) into r11
-  cmpl  $8, %r11d                       # If this is a small dtable, jump to the small dtable handlers
-  je    2f
-  cmpl  $0, %r11d
-  je    3f
-
-  movl  %eax, %r11d
-  shrl  $16, %r11d
-  movq  DATA_OFFSET(%r10, %r11, 8), %r10
-2:                                        # dtable16:
-  movzbl %ah, %ebx
-  movq  DATA_OFFSET(%r10, %rbx, 8), %r10
-3:                                       # dtable8:
-  movzbl %al, %ebx
-  mov   -8(%rsp), %rax
-  movq  DATA_OFFSET(%r10, %rbx, 8), %r10
-  mov   -16(%rsp), %rbx
-  test  %r10, %r10
-  jz    5f                             # Nil slot - invoke some kind of forwarding mechanism
-  mov   SLOT_OFFSET(%r10), %r10
+    DTABLE 21f, 0
+21: DTABLE 22f, 1
+22: DTABLE 23f, 2
+23: DTABLE 15f, 3
 
 7:
   jmp   *%r10
@@ -62,6 +48,8 @@
   xor   %rax, %rax                     # Return 0 as an integer
   pxor  %xmm0, %xmm0                   # Return 0 as a floating point value
   ret
+15:
+  mov  -8(%rsp), %rax
 5:                                       # slowSend:
   push  %rax                           # We need to preserve all registers that may contain arguments:
   push  %rbx

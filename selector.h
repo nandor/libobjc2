@@ -3,7 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-
+#include <stdatomic.h>
 /**
  * Structure used to store the types for a selector.  This allows for a quick
  * test to see whether a selector is polymorphic and allows enumeration of all
@@ -22,16 +22,47 @@ struct sel_type_list
 };
 
 /**
+ * Selector cache entry.
+ */
+struct sel_entry
+{
+  Class class;
+  IMP   imp;
+};
+
+/**
  * Selector dispatch table.
  */
 struct sel_dtable
 {
+  struct sel_entry entries[4];
+
+  atomic_bool lock;
   uint32_t size;
   uint32_t capacity;
   uint32_t index;
+  uint8_t  next;
+
   struct objc_slot **slots;
   struct sel_type_list type_list;
 };
+
+static inline BOOL spin_trylock(atomic_bool *lock)
+{
+  return atomic_exchange_explicit(lock, YES, memory_order_acq_rel) == NO;
+}
+
+static inline void spin_lock(atomic_bool *lock)
+{
+  do {
+    while (atomic_load_explicit(lock, memory_order_relaxed));
+  } while (atomic_exchange_explicit(lock, YES, memory_order_acq_rel) == YES);
+}
+
+static inline void spin_unlock(atomic_bool *lock)
+{
+  atomic_store_explicit(lock, NO, memory_order_release);
+}
 
 /**
  * Unregistered selector.

@@ -378,29 +378,6 @@ Method class_getInstanceMethod(Class aClass, SEL aSelector)
 {
   CHECK_ARG(aClass);
   CHECK_ARG(aSelector);
-  /*
-  FIXME
-  // If the class has a dtable installed, then we can use the fast path
-  if (classHasInstalledDtable(aClass))
-  {
-    // Do a dtable lookup to find out which class the method comes from.
-    struct objc_slot *slot = objc_get_slot(aClass, aSelector);
-    if (NULL == slot)
-    {
-      slot = objc_get_slot(aClass, sel_registerName(sel_getName(aSelector)));
-      if (NULL == slot)
-      {
-        return NULL;
-      }
-    }
-
-    // Now find the typed variant of the selector, with the correct types.
-    aSelector = slot->selector;
-
-    // Then do the slow lookup to find the method.
-    return class_getInstanceMethodNonrecursive(slot->owner, aSelector);
-  }
-  */
   Method m = class_getInstanceMethodNonrecursive(aClass, aSelector);
   if (NULL != m)
   {

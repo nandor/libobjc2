@@ -291,8 +291,7 @@ static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
 {
   DEBUG_LOG("Sel %s uid: %d, idx: %d, hash: %d\n", sel_getNameNonUnique(aSel), uid, idx, hash_selector(aSel));
   struct sel_dtable *dtable = dtable_pool_alloc();
-  dtable->size = 0;
-  dtable->capacity = 0;
+  memset(dtable, 0, sizeof(struct sel_dtable));
   dtable->index = uid;
   dtable->type_list.value = aSel->name_;
   dtable->type_list.next = 0;

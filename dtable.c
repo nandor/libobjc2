@@ -82,7 +82,7 @@ PRIVATE void checkARCAccessors(Class cls)
   }
   struct objc_slot *slot = objc_get_slot(cls, retain);
   if ((NULL != slot) && !ownsMethod(slot->owner, isARC))
-  {
+  {    
     objc_clear_class_flag(cls, objc_class_flag_fast_arc);
     return;
   }
@@ -142,6 +142,14 @@ struct objc_slot *dtable_lookup(struct sel_dtable *dtable, Class class)
   return NULL;
 }
 
+static inline void clear_cache(struct sel_dtable *dtable)
+{
+  spin_lock(&dtable->lock);
+  dtable->next = 0;
+  memset(dtable->entries, 0, sizeof(dtable->entries));
+  spin_unlock(&dtable->lock);
+}
+
 void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL replace)
 {
   struct objc_slot **slots;
@@ -164,7 +172,6 @@ void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL r
   {
     slots = dtable->slots;
   }
-
   for (int i = 0; i < dtable->size; ++i)
   {
     if (dtable->slots[i]->owner == class)
@@ -173,6 +180,7 @@ void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL r
       {
         dtable->slots[i]->method = method->imp;
       }
+      clear_cache(dtable);
       return;
     }
   }
@@ -223,6 +231,7 @@ static void update_dtable(struct sel_dtable *dtable, Class class, Method method)
       dtable->slots[i]->version += 1;
     }
   }
+  clear_cache(dtable);
 }
 
 PRIVATE void update_method_for_class(Class class, Method method)
@@ -371,12 +380,12 @@ void objc_send_initialize(id object)
   // removing the initialize dtable, just install both dtables correctly now
   if (0 == initializeSlot)
   {
-    checkARCAccessors(class);
     if (!skipMeta)
     {
       meta->dtable = (void *)1;
     }
     class->dtable = (void *)1;
+    checkARCAccessors(class);
     UNLOCK(&initialize_lock);
     return;
   }
@@ -458,10 +467,31 @@ static void remove_method(struct sel_dtable *dtable, Class class)
   {
     if (dtable->slots[i]->owner == class)
     {
-      dtable->slots[i] = dtable->slots[dtable->size - 1];
+      for (int j = i + 1; j < dtable->size; ++j)
+      {
+        dtable->slots[j - 1] = dtable->slots[j];
+      }
       dtable->size -= 1;
       i -= 1;
     }
+  }
+  clear_cache(dtable);
+}
+
+static void clear_caches(Class class)
+{
+  for (struct objc_method_list *l = class->methods; l; l = l->next)
+  {
+    for (int i = 0; i < l->count; ++i)
+    {
+      struct objc_method *m = &l->methods[i];
+      clear_cache(dtable_get(m->selector));
+      clear_cache(dtable_get(sel_getUntyped(m->selector)));
+    }
+  }
+  if (class->super_class)
+  {
+    clear_caches(class->super_class);
   }
 }
 
@@ -478,4 +508,5 @@ void remove_class(Class class)
       remove_method(dtable_get(untyped), class);
     }
   }
+  clear_caches(class);
 }
