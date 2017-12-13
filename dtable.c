@@ -107,25 +107,7 @@ struct sel_dtable *dtable_get(SEL sel)
   {
     objc_register_selector(sel);
   }
-
-  if ((sel->index_ & 1) == 0)
-  {
-    return (struct sel_dtable *)(sel->index_ & (~0ull >> 1ull));
-  }
-
-  uint32_t sel_idx = sel_index(sel);
-  struct sel_meta *meta = sel_meta(sel);
-  if (meta->dtable)
-  {
-    sel->index_ = (uintptr_t)meta->dtable | ~(~0ull >> 1ull);
-    return meta->dtable;
-  }
-
-  struct sel_dtable *dtable = malloc(sizeof(struct sel_dtable));
-  memset(dtable, 0, sizeof(struct sel_dtable));
-  dtable->index = sel_idx;
-  meta->dtable = dtable;
-  return dtable;
+  return (struct sel_dtable *)(sel->index_ & (~0ull >> 1ull));
 }
 
 

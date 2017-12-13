@@ -31,8 +31,8 @@
 #define POOL_TYPE struct objc_selector
 #include "pool.h"
 
-#define POOL_NAME meta
-#define POOL_TYPE struct sel_meta
+#define POOL_NAME dtable
+#define POOL_TYPE struct sel_dtable
 #include "pool.h"
 
 /**
@@ -48,7 +48,7 @@ static size_t table_size;
 /**
  * Mapping from selector numbers to selector names.
  */
-PRIVATE struct sel_meta **selector_list  = NULL;
+PRIVATE struct sel_dtable **selector_list  = NULL;
 
 #ifdef DEBUG_SELECTOR_TABLE
 #define DEBUG_LOG(...) fprintf(stderr, __VA_ARGS__)
@@ -78,12 +78,6 @@ static inline struct sel_type_list *selLookup(uint32_t idx)
 {
   LOCK_FOR_SCOPE(&selector_table_lock);
   return selLookup_locked(idx);
-}
-
-PRIVATE struct sel_meta *sel_meta(SEL sel)
-{
-  LOCK_FOR_SCOPE(&selector_table_lock);
-  return selector_list[sel_index(sel)];
 }
 
 PRIVATE inline BOOL isSelRegistered(SEL sel)
@@ -296,15 +290,17 @@ static SEL selector_lookup(const char *name, const char *types)
 static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
 {
   DEBUG_LOG("Sel %s uid: %d, idx: %d, hash: %d\n", sel_getNameNonUnique(aSel), uid, idx, hash_selector(aSel));
-  struct sel_meta *meta = meta_pool_alloc();
-  meta->dtable = NULL;
-  meta->type_list.value = aSel->name_;
-  meta->type_list.next = 0;
+  struct sel_dtable *dtable = dtable_pool_alloc();
+  dtable->size = 0;
+  dtable->capacity = 0;
+  dtable->index = uid;
+  dtable->type_list.value = aSel->name_;
+  dtable->type_list.next = 0;
   // Store the name.
   if (idx >= table_size)
   {
     table_size *= 2;
-    struct sel_meta **newList = calloc(sizeof(struct sel_meta*), table_size);
+    struct sel_dtable **newList = calloc(sizeof(struct sel_dtable*), table_size);
     if (newList == NULL)
     {
       abort();
@@ -313,11 +309,11 @@ static inline void add_selector_to_table(SEL aSel, int32_t uid, uint32_t idx)
     free(selector_list);
     selector_list = newList;
   }
-  selector_list[idx] = meta;
+  selector_list[idx] = dtable;
   // Store the selector.
   selector_insert(sel_table, aSel);
   // Set the selector's name to the uid.
-  aSel->index_ = ((uintptr_t)uid << 1ull) | 1ull | ~(~0ull >> 1ull);
+  aSel->index_ = (uintptr_t)dtable | ~(~0ull >> 1ull);
 }
 /**
  * Really registers a selector.  Must be called with the selector table locked.

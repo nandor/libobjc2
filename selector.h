@@ -30,14 +30,6 @@ struct sel_dtable
   uint32_t capacity;
   uint32_t index;
   struct objc_slot **slots;
-};
-
-/**
- * Additional information attached to a selector.
- */
-struct sel_meta
-{
-  struct sel_dtable *dtable;
   struct sel_type_list type_list;
 };
 
@@ -95,11 +87,6 @@ static inline uint32_t sel_index(SEL sel)
     return ((struct sel_dtable *)(sel->index_ & (~0ull >> 1ull)))->index;
   }
 }
-
-/**
- * Returns the meta object for a selector.
- */
-struct sel_meta *sel_meta(SEL sel);
 
 /**
  * Returns the untyped variant of a selector.
