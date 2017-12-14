@@ -46,6 +46,14 @@ __attribute__((unused)) static void objc_release_object_lock(id *x)
     __attribute__((unused)) id lock_object_pointer = obj;\
     objc_sync_enter(obj);
 
+uint64_t dtable_bytes = 0;
+
+void log_dtable_memory_usage(void)
+{
+  fprintf(stderr, "%d slot_pool\n", slot_pool_size);
+  fprintf(stderr, "%llu dtable\n", dtable_bytes);
+}
+
 /**
  * Initializes the dispatch tables.
  */
@@ -82,7 +90,7 @@ PRIVATE void checkARCAccessors(Class cls)
   }
   struct objc_slot *slot = objc_get_slot(cls, retain);
   if ((NULL != slot) && !ownsMethod(slot->owner, isARC))
-  {    
+  {
     objc_clear_class_flag(cls, objc_class_flag_fast_arc);
     return;
   }
@@ -156,7 +164,9 @@ void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL r
   if (dtable->size + 1 >= dtable->capacity)
   {
     size_t capacity = dtable->capacity ? (dtable->capacity << 1) : 4;
-    slots = (struct objc_slot **)malloc(sizeof(struct objc_slot *) * capacity);
+    size_t bytes = sizeof(struct objc_slot *) * capacity;
+    slots = (struct objc_slot **)malloc(bytes);
+    __sync_fetch_and_add(&dtable_bytes, bytes);
     for (int i = 0; i < dtable->size; ++i)
     {
       slots[i] = dtable->slots[i];

@@ -76,7 +76,7 @@ Slot_t objc_msg_lookup_internal(id *receiver, SEL sel, id sender)
   {
     if (spin_trylock(&dtable->lock))
     {
-      struct sel_entry *entry = &dtable->entries[(dtable->next++) % 4];
+      struct sel_entry *entry = &dtable->entries[(dtable->next++) % INV_DTABLE_SIZE];
       entry->class = 0;
       entry->imp = slot->method;
       entry->class = cls;

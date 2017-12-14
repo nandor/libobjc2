@@ -35,7 +35,7 @@ struct sel_entry
  */
 struct sel_dtable
 {
-  struct sel_entry entries[4];
+  struct sel_entry entries[INV_DTABLE_SIZE];
 
   atomic_bool lock;
   uint32_t size;

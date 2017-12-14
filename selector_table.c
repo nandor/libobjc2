@@ -259,12 +259,9 @@ static int selector_name_copies;
 
 PRIVATE void log_selector_memory_usage(void)
 {
-  fprintf(stderr, "%lu bytes in selector name list.\n", (unsigned long)(table_size * sizeof(void*)));
-  fprintf(stderr, "%d bytes in selector names.\n", selector_name_copies);
-  fprintf(stderr, "%d bytes (%d entries) in selector hash table.\n", (int)(sel_table->table_size *
-          sizeof(struct selector_table_cell_struct)), sel_table->table_size);
-  fprintf(stderr, "%d selectors registered.\n", selector_count);
-  fprintf(stderr, "%d hash table cells per selector (%.2f%% full)\n", sel_table->table_size / selector_count,  ((float)selector_count) /  sel_table->table_size * 100);
+  fprintf(stderr, "%d type_list_pool\n", type_list_pool_size);
+  fprintf(stderr, "%d selector_pool\n", selector_pool_size);
+  fprintf(stderr, "%d dtable_pool\n", dtable_pool_size);
 }
 
 

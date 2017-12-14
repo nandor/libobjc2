@@ -32,10 +32,26 @@
   mov   %rax, -8(%rsp)
   mov   %r10, %rax
 
+#if INV_DTABLE_SIZE == 2
+    DTABLE 21f, 0
+21: DTABLE 15f, 1
+#elif INV_DTABLE_SIZE == 4
     DTABLE 21f, 0
 21: DTABLE 22f, 1
 22: DTABLE 23f, 2
 23: DTABLE 15f, 3
+#elif INV_DTABLE_SIZE == 8
+    DTABLE 21f, 0
+21: DTABLE 22f, 1
+22: DTABLE 23f, 2
+23: DTABLE 24f, 3
+24: DTABLE 25f, 4
+25: DTABLE 26f, 5
+26: DTABLE 27f, 6
+27: DTABLE 15f, 7
+#else
+# error Invalid dtable size
+#endif
 
 7:
   jmp   *%r10
