@@ -163,7 +163,7 @@ void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL r
   struct objc_slot **slots;
   if (dtable->size + 1 >= dtable->capacity)
   {
-    size_t capacity = dtable->capacity ? (dtable->capacity << 1) : 4;
+    size_t capacity = dtable->capacity ? (dtable->capacity << 1) : 2;
     size_t bytes = sizeof(struct objc_slot *) * capacity;
     slots = (struct objc_slot **)malloc(bytes);
     __sync_fetch_and_add(&dtable_bytes, bytes);
