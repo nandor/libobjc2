@@ -1,11 +1,13 @@
 
 .macro DTABLE next, idx
-  cmp   (\idx * 16)(%r11), %rax
+  movq  (\idx * 24 + 16)(%r11), %rbx
+  cmp   (\idx * 24)(%r11), %rax
   jne   \next
-  movq  (\idx * 16 + 8)(%r11), %r10
-  cmpq  (\idx * 16)(%r11), %rax
+  movq  (\idx * 24 + 8)(%r11), %r10
+  cmpq  (\idx * 24 + 16)(%r11), %rbx
   jne   15f
   mov  -8(%rsp), %rax
+  mov  -16(%rsp), %rbx
   jmp   *%r10
 .endm
 
@@ -30,6 +32,7 @@
   jnc   5f
 
   mov   %rax, -8(%rsp)
+  mov   %rbx, -16(%rsp)
   mov   %r10, %rax
 
 #if INV_DTABLE_SIZE == 2
@@ -64,6 +67,7 @@
   ret
 15:
   mov  -8(%rsp), %rax
+  mov  -16(%rsp), %rbx
 5:                                       # slowSend:
   push  %rax                           # We need to preserve all registers that may contain arguments:
   push  %rbx

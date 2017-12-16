@@ -28,6 +28,7 @@ struct sel_entry
 {
   Class class;
   IMP   imp;
+  uint64_t version;
 };
 
 /**
