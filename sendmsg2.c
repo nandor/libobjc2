@@ -74,6 +74,7 @@ Slot_t objc_msg_lookup_internal(id *receiver, SEL sel, id sender)
   struct sel_dtable *dtable = dtable_get(sel);
   if ((slot = dtable_lookup(dtable, cls)))
   {
+#if INV_DTABLE_SIZE != 0
     if (spin_trylock(&dtable->lock))
     {
       struct sel_entry *entry = &dtable->entries[(dtable->next++) % INV_DTABLE_SIZE];
@@ -84,6 +85,7 @@ Slot_t objc_msg_lookup_internal(id *receiver, SEL sel, id sender)
       entry->class = cls;
       spin_unlock(&dtable->lock);
     }
+#endif
     return slot;
   }
   if ((slot = dtable_lookup(dtable_get(sel_getUntyped(sel)), cls)))

@@ -29,7 +29,12 @@ struct objc_slot *dtable_lookup(struct sel_dtable *dtable, Class class);
 /**
  * Adds a method to a dtable.
  */
-void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL replace);
+void dtable_insert(
+    uint32_t class_id,
+    struct sel_dtable *dtable,
+    Class class,
+    Method method,
+    BOOL replace);
 
 /**
  * Updates the implementation of a method.

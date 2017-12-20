@@ -48,10 +48,12 @@ __attribute__((unused)) static void objc_release_object_lock(id *x)
 
 uint64_t dtable_bytes = 0;
 
-void log_dtable_memory_usage(void)
+extern uint64_t sparseArrayBytes;
+PRIVATE void log_dtable_memory_usage(void)
 {
   fprintf(stderr, "%d slot_pool\n", slot_pool_size);
   fprintf(stderr, "%llu dtable\n", dtable_bytes);
+  fprintf(stderr, "%llu sparse_array\n", sparseArrayBytes);
 }
 
 /**
@@ -121,127 +123,157 @@ struct sel_dtable *dtable_get(SEL sel)
 
 struct objc_slot *dtable_lookup(struct sel_dtable *dtable, Class class)
 {
-  while (class != Nil)
+  if (dtable->is_sparse)
   {
-    uint32_t size = dtable->size;
-    struct objc_slot **slots = dtable->slots;
-
-    int beg = 0, end = size - 1;
-    while (beg <= end)
+    uint32_t class_id =  (uint32_t)class->dtable;
+    while (class != Nil)
     {
-      int mid = beg + ((end - beg) >> 1);
-      if (slots[mid]->owner == class)
+      struct objc_slot *slot = SparseArrayLookup(dtable->array, class_id);
+      if (slot != NULL)
       {
-        return slots[mid];
+        return slot;
       }
-      else if (slots[mid]->owner < class)
-      {
-        beg = mid + 1;
-      }
-      else
-      {
-        end = mid - 1;
-      }
+      class = class->super_class;
     }
-
-    class = class->super_class;
   }
+  else
+  {
+    while (class != Nil)
+    {
+      uint32_t size = dtable->size;
+      struct objc_slot **slots = dtable->slots;
+      for (int i = 0; i < size; ++i)
+      {
+        struct objc_slot *slot = slots[i];
+        if (slot->owner == class)
+        {
+          return slot;
+        }
+      }
 
+      class = class->super_class;
+    }
+  }
   return NULL;
 }
 
 static inline void clear_cache(struct sel_dtable *dtable)
 {
+#if INV_DTABLE_SIZE != 0
   spin_lock(&dtable->lock);
   dtable->next = 0;
   memset(dtable->entries, 0, sizeof(dtable->entries));
   spin_unlock(&dtable->lock);
+#endif
 }
 
-void dtable_insert(struct sel_dtable *dtable, Class class, Method method, BOOL replace)
+void dtable_insert(
+    uint32_t class_id,
+    struct sel_dtable *dtable,
+    Class class,
+    Method method,
+    BOOL replace)
 {
-  struct objc_slot **slots;
-  if (dtable->size + 1 >= dtable->capacity)
+  if (dtable->size >= 16 || dtable->is_sparse)
   {
-    size_t capacity = dtable->capacity ? (dtable->capacity << 1) : 2;
-    size_t bytes = sizeof(struct objc_slot *) * capacity;
-    slots = (struct objc_slot **)malloc(bytes);
-    __sync_fetch_and_add(&dtable_bytes, bytes);
-    for (int i = 0; i < dtable->size; ++i)
+    SparseArray *array;
+    if (dtable->is_sparse)
     {
-      slots[i] = dtable->slots[i];
-    }
-    for (int i = dtable->size; i < capacity; ++i)
-    {
-      slots[i] = NULL;
-    }
-    dtable->slots = slots;
-    dtable->capacity = capacity;
-  }
-  else
-  {
-    slots = dtable->slots;
-  }
-  for (int i = 0; i < dtable->size; ++i)
-  {
-    if (dtable->slots[i]->owner == class)
-    {
-      if (replace)
-      {
-        dtable->slots[i]->method = method->imp;
-      }
-      clear_cache(dtable);
-      return;
-    }
-  }
-
-  struct objc_slot *slot = new_slot_for_method_in_class(method, class);
-  if (dtable->size == 0)
-  {
-    slots[dtable->size] = slot;
-    dtable->size += 1;
-  }
-  else
-  {
-    if (class > slots[dtable->size - 1]->owner)
-    {
-      slots[dtable->size] = slot;
-      dtable->size += 1;
+      array = dtable->array;
     }
     else
     {
-      slots[dtable->size] = slots[dtable->size - 1];
-      dtable->size += 1;
-
-      int i;
-      for (i = dtable->size - 2; i > 0; --i)
+      array = SparseArrayNewWithDepth(16);
+      for (int i = 0; i < dtable->size; ++i)
       {
-        if (slots[i]->owner > class)
-        {
-          slots[i] = slots[i - 1];
-        }
-        else
-        {
-          break;
-        }
+        SparseArrayInsert(array, (uint32_t)dtable->slots[i]->owner->dtable, dtable->slots[i]);
       }
-
-      slots[i] = slot;
+      dtable->is_sparse = YES;
+      dtable->array = array;
     }
+
+    struct objc_slot *slot = SparseArrayLookup(array, class_id);
+    if (slot)
+    {
+      if (replace)
+      {
+        slot->method = method->imp;
+      }
+    }
+    else
+    {
+      dtable->size += 1;
+      SparseArrayInsert(array, class_id, new_slot_for_method_in_class(method, class));
+    }
+    return;
+  }
+  else
+  {
+    struct objc_slot **slots;
+    if (dtable->size + 1 >= dtable->capacity)
+    {
+      size_t capacity = dtable->capacity ? (dtable->capacity << 1) : 2;
+      size_t bytes = sizeof(struct objc_slot *) * capacity;
+      slots = (struct objc_slot **)malloc(bytes);
+      __sync_fetch_and_add(&dtable_bytes, bytes);
+      for (int i = 0; i < dtable->size; ++i)
+      {
+        slots[i] = dtable->slots[i];
+      }
+      for (int i = dtable->size; i < capacity; ++i)
+      {
+        slots[i] = NULL;
+      }
+      dtable->slots = slots;
+      dtable->capacity = capacity;
+    }
+    else
+    {
+      slots = dtable->slots;
+    }
+    for (int i = 0; i < dtable->size; ++i)
+    {
+      if (dtable->slots[i]->owner == class)
+      {
+        if (replace)
+        {
+          dtable->slots[i]->method = method->imp;
+        }
+        clear_cache(dtable);
+        return;
+      }
+    }
+
+    slots[dtable->size] = new_slot_for_method_in_class(method, class);
+    dtable->size += 1;
   }
 }
 
 static void update_dtable(struct sel_dtable *dtable, Class class, Method method)
 {
-  for (int i = 0; i < dtable->size; ++i)
+  struct objc_slot *slot = NULL;
+  if (dtable->is_sparse)
   {
-    if (dtable->slots[i]->owner == class)
+    slot = SparseArrayLookup(dtable->array, (uint32_t)class->dtable);
+  }
+  else
+  {
+    for (int i = 0; i < dtable->size; ++i)
     {
-      dtable->slots[i]->method = method->imp;
-      dtable->slots[i]->version += 1;
+      if (dtable->slots[i]->owner == class)
+      {
+        slot = dtable->slots[i];
+        break;
+      }
     }
   }
-  clear_cache(dtable);
+
+  if (slot)
+  {
+    slot->method = method->imp;
+    slot->version += 1;
+    clear_cache(dtable);
+  }
 }
 
 PRIVATE void update_method_for_class(Class class, Method method)
@@ -251,7 +283,7 @@ PRIVATE void update_method_for_class(Class class, Method method)
   update_dtable(dtable_get(sel_getUntyped(method->selector)), class, method);
 }
 
-static void register_methods(Class class)
+static void register_methods(uint64_t class_id, Class class)
 {
   for (struct objc_method_list *l = class->methods; l; l = l->next)
   {
@@ -260,8 +292,11 @@ static void register_methods(Class class)
       struct objc_method *m = &l->methods[i];
       SEL typed = m->selector;
       SEL untyped = sel_getUntyped(typed);
-      dtable_insert(dtable_get(typed), class, m, NO);
-      dtable_insert(dtable_get(untyped), class, m, NO);
+      dtable_insert(class_id, dtable_get(typed), class, m, NO);
+      if (dtable_get(typed) != dtable_get(untyped))
+      {
+        dtable_insert(class_id, dtable_get(untyped), class, m, NO);
+      }
     }
   }
 }
@@ -269,6 +304,7 @@ static void register_methods(Class class)
 typedef struct init_list_
 {
   Class class;
+  uint64_t class_id;
   struct init_list_ *next;
 } InitList;
 
@@ -280,10 +316,9 @@ static void remove_dtable(InitList* meta_buffer)
   LOCK(&initialize_lock);
   InitList *buffer = meta_buffer->next;
 
-
   // Install the dtables.
-  meta_buffer->class->dtable = (void *)1;
-  buffer->class->dtable = (void *)1;
+  meta_buffer->class->dtable = (void *)meta_buffer->class_id;
+  buffer->class->dtable = (void *)buffer->class_id;
 
   // Remove the look-aside buffer entry.
   if (init_list == meta_buffer)
@@ -301,6 +336,8 @@ static void remove_dtable(InitList* meta_buffer)
   }
   UNLOCK(&initialize_lock);
 }
+
+static uint64_t next_class_id = 1;
 
 void objc_send_initialize(id object)
 {
@@ -363,10 +400,13 @@ void objc_send_initialize(id object)
   objc_set_class_flag(class, objc_class_flag_initialized);
   objc_set_class_flag(meta, objc_class_flag_initialized);
 
-  register_methods(class);
+  uint64_t class_id = __sync_fetch_and_add(&next_class_id, 2);
+  uint64_t meta_id = class_id + 1;
+
+  register_methods(class_id, class);
   if (!skipMeta)
   {
-    register_methods(meta);
+    register_methods(meta_id, meta);
   }
 
   // Now we've finished doing things that may acquire the runtime lock, so we
@@ -386,15 +426,16 @@ void objc_send_initialize(id object)
 
   struct objc_slot *initializeSlot = skipMeta ? 0 : objc_get_slot(meta, initializeSel);
 
+
   // If there's no initialize method, then don't bother installing and
   // removing the initialize dtable, just install both dtables correctly now
   if (0 == initializeSlot)
   {
     if (!skipMeta)
     {
-      meta->dtable = (void *)1;
+      meta->dtable = (void *)meta_id;
     }
-    class->dtable = (void *)1;
+    class->dtable = (void *)class_id;
     checkARCAccessors(class);
     UNLOCK(&initialize_lock);
     return;
@@ -404,9 +445,9 @@ void objc_send_initialize(id object)
   // a message to this class in future, the lookup function will check this
   // buffer if the receiver's dtable is not installed, and block if
   // attempting to send a message to this class.
-  InitList buffer = { class, init_list };
+  InitList buffer = { class, class_id, init_list };
   __attribute__((cleanup(remove_dtable)))
-  InitList meta_buffer = { meta, &buffer };
+  InitList meta_buffer = { meta, meta_id, &buffer };
   init_list = &meta_buffer;
 
   // We now release the initialize lock.  We'll reacquire it later when we do
@@ -466,23 +507,23 @@ PRIVATE void add_method_list_to_class(Class cls, struct objc_method_list *method
     struct objc_method *m = &methods->methods[i];
     SEL typed = m->selector;
     SEL untyped = sel_getUntyped(typed);
-    dtable_insert(dtable_get(typed), cls, m, YES);
-    dtable_insert(dtable_get(untyped), cls, m, YES);
+    dtable_insert((uint64_t)cls->dtable, dtable_get(typed), cls, m, YES);
+    dtable_insert((uint64_t)cls->dtable, dtable_get(untyped), cls, m, YES);
   }
 }
 
 static void remove_method(struct sel_dtable *dtable, Class class)
 {
-  for (int i = 0; i < dtable->size; ++i)
+  if (!dtable->is_sparse)
   {
-    if (dtable->slots[i]->owner == class)
+    for (int i = 0; i < dtable->size; ++i)
     {
-      for (int j = i + 1; j < dtable->size; ++j)
+      if (dtable->slots[i]->owner == class)
       {
-        dtable->slots[j - 1] = dtable->slots[j];
+        dtable->slots[i] = dtable->slots[dtable->size - 1];
+        dtable->size -= 1;
+        break;
       }
-      dtable->size -= 1;
-      i -= 1;
     }
   }
   clear_cache(dtable);

@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdatomic.h>
+#include "sarray2.h"
+
 /**
  * Structure used to store the types for a selector.  This allows for a quick
  * test to see whether a selector is polymorphic and allows enumeration of all
@@ -36,15 +38,20 @@ struct sel_entry
  */
 struct sel_dtable
 {
+#if INV_DTABLE_SIZE != 0
   struct sel_entry entries[INV_DTABLE_SIZE];
-
   atomic_bool lock;
+  uint8_t  next;
+#endif
   uint32_t size;
   uint32_t capacity;
   uint32_t index;
-  uint8_t  next;
-
-  struct objc_slot **slots;
+  BOOL is_sparse;
+  union
+  {
+    struct objc_slot **slots;
+    SparseArray *array;
+  };
   struct sel_type_list type_list;
 };
 

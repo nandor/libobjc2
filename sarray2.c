@@ -46,9 +46,17 @@ static void init_pointers(SparseArray * sarray)
   }
 }
 
+uint64_t sparseArrayBytes = 0;
+static SparseArray *AllocArray(void)
+{
+  __sync_fetch_and_add(&sparseArrayBytes, sizeof(SparseArray));
+  return calloc(1, sizeof(SparseArray));
+}
+
+
 PRIVATE SparseArray * SparseArrayNewWithDepth(uint32_t depth)
 {
-  SparseArray * sarray = calloc(1, sizeof(SparseArray));
+  SparseArray * sarray = AllocArray();
   sarray->refCount = 1;
   sarray->shift = depth-base_shift;
   init_pointers(sarray);
@@ -68,7 +76,7 @@ PRIVATE SparseArray *SparseArrayExpandingArray(SparseArray *sarray, uint32_t new
   assert(new_depth > sarray->shift);
   // Expanding a child sarray has undefined results.
   assert(sarray->refCount == 1);
-  SparseArray *new = calloc(1, sizeof(SparseArray));
+  SparseArray *new = AllocArray();
   new->refCount = 1;
   new->shift = sarray->shift + 8;
   new->data[0] = sarray;
@@ -154,7 +162,7 @@ PRIVATE void SparseArrayInsert(SparseArray * sarray, uint32_t index, void *value
         (&EmptyArray24 == child))
     {
       // Insert missing nodes
-      SparseArray * newsarray = calloc(1, sizeof(SparseArray));
+      SparseArray * newsarray = AllocArray();
       newsarray->refCount = 1;
       if (base_shift >= sarray->shift)
       {
@@ -185,7 +193,7 @@ PRIVATE void SparseArrayInsert(SparseArray * sarray, uint32_t index, void *value
 
 PRIVATE SparseArray *SparseArrayCopy(SparseArray * sarray)
 {
-  SparseArray *copy = calloc(sizeof(SparseArray), 1);
+  SparseArray *copy = AllocArray();
   memcpy(copy, sarray, sizeof(SparseArray));
   copy->refCount = 1;
   // If the sarray has children, increase their refcounts and link them
